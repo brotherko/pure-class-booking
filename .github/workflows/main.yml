@@ -27,6 +27,9 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./functions
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
@@ -35,8 +38,8 @@ jobs:
         with:
           name: lib
           path: ./functions/lib
-      - name: Show Folder Structure
-        run: ls -la
+      - name: Install Dependencies
+        run: npm install
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@master
         with:
