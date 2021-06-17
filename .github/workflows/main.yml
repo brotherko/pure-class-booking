@@ -11,6 +11,7 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
+        working-directory: ./functions
       - name: Install Dependencies
         run: npm install
       - name: Build
