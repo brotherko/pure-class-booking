@@ -8,10 +8,12 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./functions
     steps:
       - name: Checkout Repo
         uses: actions/checkout@master
-        working-directory: ./functions
       - name: Install Dependencies
         run: npm install
       - name: Build
