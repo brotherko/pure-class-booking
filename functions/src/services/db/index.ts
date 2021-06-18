@@ -1,2 +1,2 @@
-export * from './modules/orders'
-export * from './modules/users';
+export * from './collections/orders'
+export * from './collections/users';
