@@ -6,8 +6,10 @@ export enum OrderStatus {
   PENDING = 'PENDING',
 }
 
+
 export type Order = {
   _id: string;
+  userId?: string;
   username: string;
   classId: string;
   status: OrderStatus;

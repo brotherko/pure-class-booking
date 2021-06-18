@@ -1,6 +1,0 @@
-const getOrder = () => {
-  
-}
-const postOrder = () => {
-  
-}

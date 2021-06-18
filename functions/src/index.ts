@@ -8,3 +8,4 @@ export * from './modules/download-extra-headers';
 export * from './modules/refresh-jwts';
 export * from './modules/download-classes';
 export * from './modules/booking';
+export * from './modules/api-service';

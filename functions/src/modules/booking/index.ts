@@ -5,6 +5,7 @@ import { Order, OrderStatus, OrderJoinUser } from '../../types/order';
 import { User } from '../../types/user';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
+import { err, ok, Result } from 'neverthrow';
 
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese
@@ -13,7 +14,7 @@ const BASE_PAYLOAD: BookingRequestPayload = {
   book_type: 1,
 }
 
-const makeBooking = async (jwt: string, classId: string) => {
+const makeBooking = async (jwt: string, classId: string): Promise<Result<number, Error>> => {
   const payload: BookingRequestPayload = {
     ...BASE_PAYLOAD,
     class_id: classId,
@@ -23,15 +24,15 @@ const makeBooking = async (jwt: string, classId: string) => {
     const { data: { error, data } } = await postBooking(payload, jwt);
     const { booking_id: bookingId } = data || {};
     if (!data || error.code !== 200 || !bookingId) {
-      return [OrderStatus.FAIL, error.message]
+      return err(Error(error.message || 'Unable to book'));
     }
-    return [OrderStatus.SUCCESS, bookingId];
+    return ok(bookingId);
   } catch (e) {
-    return [OrderStatus.FAIL, e.toString() as string]
+    return err(e);
   }
 };
 
-const getPendingOrders = async () => {
+const getPendingOrders = async (): Promise<Result<OrderJoinUser[], Error>> => {
   const orders = await bulkGet<Order>('orders', [{
     key: 'status',
     op: '==',
@@ -39,27 +40,33 @@ const getPendingOrders = async () => {
   }]);
   const users = await bulkGet<User>('users')
 
-  return orders.map(order => ({
-    ...order,
-    user: users.find(user => user.username === order.username)
-  })) as OrderJoinUser[]
-}
+  if (orders.isErr() || users.isErr()) {
+    logger.error(`Can not fetch orders or users data`);
+    return err(Error('Order fetching error'));
+  }
+  const merged = orders.value.map(order => ({
+      ...order,
+      user: users.value.find(user => user._id === order.userId)
+    })) as OrderJoinUser[]
+
+  return ok(merged);
+};
 
 export const task = async () => {
   const pendingsOrders = await getPendingOrders();
 
   logger.debug(pendingsOrders);
 
-  if (!pendingsOrders || pendingsOrders.length === 0) {
-    logger.info('SKIP: No pending orders')
+  if (pendingsOrders.isErr()) {
+    logger.error('get pendingOrders err');
     return;
   }
 
-  const promises: Promise<any>[] = []
-  pendingsOrders.forEach(({ user: { jwt }, classId }) => {
+  const promises: Promise<Result<number, Error>>[] = []
+  pendingsOrders.value.forEach(({ user: { jwt } = { }, classId }) => {
     if (!jwt || !classId) {
       // this is confirmed to be fail. will be handle together with those failed orders
-      promises.push(new Promise(resolve => resolve(-1))); 
+      promises.push(new Promise(resolve => resolve(err(Error('Jwt or classId not found in order'))))); 
     } else {
       promises.push(makeBooking(jwt, classId))
     }
@@ -67,18 +74,27 @@ export const task = async () => {
 
   const responses = await Promise.all(promises);
 
-  const failedCount = responses.filter(res => res[0] === OrderStatus.FAIL).length
+  const failedCount = responses.filter(res => res.isErr()).length
 
-  const updates = pendingsOrders.map(({ _id }, idx) => {
-    const [status, arg] = responses[idx];
+  const updates = pendingsOrders.value.map(({ _id }, idx) => {
+    const res = responses[idx];
+    if (res.isErr()) {
+      return {
+        _id,
+        status: OrderStatus.FAIL,
+        errorMessage: res.error.toString(),
+      }
+    }
     return {
       _id,
-      status,
-      [status === OrderStatus.FAIL ? 'error' : 'bookingId']: arg
+      status: OrderStatus.SUCCESS,
+      bookingId: res.value
     }
   })
 
-  logger.info(`Booking OK -  Success: ${pendingsOrders.length - failedCount} Fail: ${failedCount}`)
+  logger.debug(updates)
+
+  logger.info(`Booking OK -  Success: ${pendingsOrders.value.length - failedCount} Fail: ${failedCount}`)
 
   try {
     await bulkWrite(updates, {
