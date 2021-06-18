@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { createOrder, getOrders } from '../../../services/db';
+import { logger } from 'firebase-functions';
+import { createOrder, deleteUserOrder, getOrders } from '../../../services/db';
 import { Order, OrderStatus } from '../../../types/order';
 
 export const OrdersRoute = {
@@ -31,11 +32,24 @@ export const OrdersRoute = {
     }
     return res.json({
       data: {
+        id: getCreateOrder.value.id,
         message: 'Order has been created'
       }
     })
   },
   delete: async (req: Request, res: Response, next: NextFunction) => {
-    return next(Error('Not implement'));
+    const { params: { id } = { } } = req;
+    const { uid } = req.jwtPayload;
+    if (!id) {
+      return next(Error('Must contain ID'));
+    }
+    const getDeleteOrder = await deleteUserOrder(id, uid);
+    if (getDeleteOrder.isErr()) {
+      return next(Error(`Unable to delete order: ${getDeleteOrder.error.message}`));
+    }
+    return res.json({
+      id,
+      message: 'Order has been deleted'
+    })
   }
 }

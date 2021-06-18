@@ -16,9 +16,29 @@ export const createOrder = (order: Partial<Order>) => {
   return ResultAsync.fromPromise(db.collection(COLLECTION).add(payload), () => Error('Unable to create order in DB'));
 }
 
-export const deleteOrder = (id: string) => {
-  ResultAsync.fromPromise(db.collection(COLLECTION).doc(id).delete(), () => Error('Unable to delete order in DB'))
+export const deleteUserOrder = async (id: string, userId: string) => {
+  const getOrder_ = await getOrder(id);
+  if (getOrder_.isErr()) {
+    return err(getOrder_.error);
+  }
+  if (!getOrder_.value.exists) {
+    return err(Error('Order do not exist'));
+  }
+  const order = getOrder_.value.data() as Order;
+  if (order.userId !== userId) {
+    err(Error('Permission deney'));
+  }
+  const getOrderDelete = await deleteOrderUnsafe(id);
+  if (getOrderDelete.isErr()) {
+    logger.error(getOrderDelete.error.message)
+    return err(getOrderDelete.error)
+  }
+  return ok(order);
 }
+
+export const deleteOrderUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(COLLECTION).doc(id).delete(), () => Error('Unable to get order in DB'));
+
+export const getOrder = (id: string) => ResultAsync.fromPromise(db.collection(COLLECTION).doc(id).get(), () => Error('Unable to get order in DB'));
 
 export const getOrders = (conditions: Partial<Order>) => {
   const { userId, status } = conditions;

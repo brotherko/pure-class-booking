@@ -17,8 +17,7 @@ app.post('/login', loginRoute.post);
 app
   .get('/orders', OrdersRoute.get)
   .post('/orders', OrdersRoute.post)
-  .delete('/orders/:id', (req, res) => {
-  })
+  .delete('/orders/:id', OrdersRoute.delete)
 
 app.use(expressErrorHandler);
 
