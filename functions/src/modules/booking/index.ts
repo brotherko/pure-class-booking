@@ -6,6 +6,7 @@ import { User } from '../../types/user';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { err, ok, Result } from 'neverthrow';
+import { getFullOrders } from '../../services/db';
 
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese
@@ -32,28 +33,8 @@ const makeBooking = async (jwt: string, classId: string): Promise<Result<number,
   }
 };
 
-const getPendingOrders = async (): Promise<Result<OrderJoinUser[], Error>> => {
-  const orders = await bulkGet<Order>('orders', [{
-    key: 'status',
-    op: '==',
-    value: OrderStatus.PENDING
-  }]);
-  const users = await bulkGet<User>('users')
-
-  if (orders.isErr() || users.isErr()) {
-    logger.error(`Can not fetch orders or users data`);
-    return err(Error('Order fetching error'));
-  }
-  const merged = orders.value.map(order => ({
-      ...order,
-      user: users.value.find(user => user._id === order.userId)
-    })) as OrderJoinUser[]
-
-  return ok(merged);
-};
-
 export const task = async () => {
-  const pendingsOrders = await getPendingOrders();
+  const pendingsOrders = await getFullOrders({ status: OrderStatus.PENDING });
 
   logger.debug(pendingsOrders);
 

@@ -2,13 +2,11 @@ import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { delay } from '../../utils/delay';
 import { getPureJwt } from '../../services/pure-api-service';
-import { bulkGet } from '../../utils/db-helper';
-import { User } from '../../types/user';
 import { firestore } from 'firebase-admin';
-import { upsertUser } from '../../services/db';
+import { getUsers, upsertUser } from '../../services/db';
 
 const task = async () => {
-  const users = await bulkGet<User>('users');
+  const users = await getUsers();
   if (users.isErr()) {
     logger.error('Unable to fetch users');
     throw new Error('Task failed');
