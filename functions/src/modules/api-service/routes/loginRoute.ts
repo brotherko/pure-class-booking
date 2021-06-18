@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import { logger } from 'firebase-functions';
 import { upsertUser } from '../../../services/db';
 import { getPureJwt } from '../../../services/pure-api-service';
 import { PureUserCredential } from '../../../types/pure-user-credential';
+import logger from '../../../utils/logger';
 
 export const loginRoute = {
   post: async (req: Request, res: Response, next: NextFunction) => {

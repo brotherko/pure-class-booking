@@ -1,10 +1,11 @@
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { delay } from '../../utils/delay';
-import { getPureJwt } from '../../services/pure-api-service/index';
-import { bulkGet, upsertUser } from '../../services/db';
+import { getPureJwt } from '../../services/pure-api-service';
+import { bulkGet } from '../../utils/db-helper';
 import { User } from '../../types/user';
 import { firestore } from 'firebase-admin';
+import { upsertUser } from '../../services/db';
 
 const task = async () => {
   const users = await bulkGet<User>('users');

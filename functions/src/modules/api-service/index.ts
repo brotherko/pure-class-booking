@@ -1,9 +1,9 @@
 import express, {  } from 'express';
 import { https } from 'firebase-functions';
-import { loginRoute } from './routes/login';
+import { loginRoute } from './routes/loginRoute';
 import { expressErrorHandler } from './middlewares/error-handler';
 import { expressJwtAuth } from './middlewares/jwt-auth';
-import { OrdersRoute } from './routes/orders';
+import { OrdersRoute } from './routes/ordersRoute';
 
 const app = express()
 

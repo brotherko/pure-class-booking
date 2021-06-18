@@ -1,5 +1,5 @@
-import { bulkGet, bulkWrite, db } from '../../services/db';
-import { postBooking } from '../../services/pure-api-service/index';
+import { bulkGet, bulkWrite, db } from '../../utils/db-helper';
+import { postBooking } from '../../services/pure-api-service';
 import { BookingRequestPayload } from '../../services/pure-api-service/interfaces/booking-request-payload';
 import { Order, OrderStatus, OrderJoinUser } from '../../types/order';
 import { User } from '../../types/user';

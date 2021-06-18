@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import { createOrder, getOrdersBy } from '../../../services/db';
+import { createOrder, getOrders } from '../../../services/db';
 import { Order, OrderStatus } from '../../../types/order';
 
 export const OrdersRoute = {
   get: async (req: Request, res: Response, next: NextFunction) => {
     const { uid } = req.jwtPayload;
-    const orders = await getOrdersBy({
+    const orders = await getOrders({
       userId: uid,
     });
     if (orders.isErr()) {

@@ -1,9 +1,9 @@
 import { ViewScheduleRequestParams } from '../../services/pure-api-service/interfaces/view-schedule-request-param';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
-import { getClassesData } from '../../services/pure-api-service/index';
+import { getClassesData } from '../../services/pure-api-service';
 import { DateTime, Duration } from 'luxon';
-import { bulkWrite, db } from '../../services/db';
+import { bulkWrite, db } from '../../utils/db-helper';
 
 const params: ViewScheduleRequestParams = {
   "language_id":1,
