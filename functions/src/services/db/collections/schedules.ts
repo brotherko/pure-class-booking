@@ -1,21 +1,21 @@
 import { ResultAsync } from 'neverthrow';
 import { bulkGet, Condition } from '../../../utils/db-helper';
 import { ClassSchedule } from '../../pure-api-service/interfaces/class';
+import { createCollection } from '../absracts/collection';
 
-const COLLECTION = 'classes';
+const basic = createCollection<ClassSchedule>('classes');
 
-export const getSchedulesByDateRange = (startDate: Date, endDate: Date) => {
+const getByDateRange = (startDate: Date, endDate: Date) => {
   const conds: Condition[] = [];
   conds.push({
     key: 'start_datetime',
     op: '>',
     value: startDate
   })
-  // conds.push({
-  //   key: 'end_datetime',
-  //   op: '<',
-  //   value: endDate
-  // })
+  return basic.getMany(conds);
+}
 
-  return bulkGet<ClassSchedule>(COLLECTION, conds);
+export const scheduleCollection = {
+  ...basic,
+  getByDateRange
 }

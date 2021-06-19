@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { upsertUser } from '../../../services/db';
+import { usersCollection } from '../../../services/db';
 import { postLogin } from '../../../services/pure-api-service';
 import { PureUserCredential } from '../../../types/pure-user-credential';
 import logger from '../../../utils/logger';
@@ -26,7 +26,7 @@ export const loginRoute = {
 
       const { user, jwtPayload: { uid } } = getLogin.value;
 
-      const getUpsertUser = await upsertUser(uid, { ...user, username, password });
+      const getUpsertUser = await usersCollection.upsert(uid, { ...user, username, password });
       if (getUpsertUser.isErr()) {
         logger.error('Unable to save user data to db');
         return next(getUpsertUser.error);

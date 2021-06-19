@@ -2,7 +2,7 @@ import { err, ok, Result, ResultAsync } from 'neverthrow';
 import { db, bulkGet, Condition } from '../../../utils/db-helper';
  import { Order, OrderJoinUser, OrderStatus } from '../../../types/order';
 import { logger } from 'firebase-functions';
-import { getUsers } from './users';
+import { usersCollection } from './users';
 
  const COLLECTION = 'orders';
 
@@ -60,7 +60,7 @@ export const getOrders = (conditions: Partial<Order>) => {
 
 export const getFullOrders = async (conditions: Partial<Order>): Promise<Result<OrderJoinUser[], Error>> => {
   const orders = await getOrders(conditions);
-  const users = await getUsers();
+  const users = await usersCollection.getMany();
 
   if (orders.isErr() || users.isErr()) {
     logger.error(`Can not fetch orders or users data`);
