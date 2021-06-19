@@ -101,7 +101,7 @@ const task = async () => {
 
   logger.info(`starting to get class data from ${date}`)
 
-  // await downloadClassData(date);
+  await downloadClassData(date);
   await downloadLocations();
 
   logger.info(`class data - OK`)

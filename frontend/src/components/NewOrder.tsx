@@ -20,6 +20,11 @@ export const NewOrder = () => {
   const [filter, setFilter] = useState<ScheduleFilter>({});
   const { message, success } = useMessage();
 
+  const { data: orders, refetch: refetchOrders } = useGet<Order[]>({
+    path: 'orders',
+    resolve: data => data.data
+  });
+
   const { data: schedules, refetch } = useGet<Schedule[]>({
     path: `schedules/location/${filter ? filter.locationId : ''}`,
     lazy: true,
@@ -36,6 +41,7 @@ export const NewOrder = () => {
     const { data, message } = await postBook({
       classId: classId.toString()
     });
+    refetchOrders();
     success(message);
   };
 
@@ -53,10 +59,9 @@ export const NewOrder = () => {
     }));
   };
 
-
-  const startDate = DateTime.now().plus(Duration.fromObject({ days: 2 }));
+  const startDate = DateTime.now().plus(Duration.fromObject({ days: 0 }));
   const endDate = useMemo(() => {
-    if (!startDate || !schedules) {
+    if (!startDate || !schedules || schedules.length === 0) {
       return startDate;
     }
     return DateTime.max.apply(null, schedules.map((schedule) => DateTime.fromFormat(schedule.start_date, "yyyy-LL-dd")));
@@ -64,7 +69,7 @@ export const NewOrder = () => {
 
   const filteredSchedules = useMemo(() => {
     if (!schedules || !filter.date) {
-      return [];
+      return undefined;
     }
     return schedules.filter((schedule) => parseDate(schedule.start_date).equals(filter.date));
   }, [filter.date, schedules]);
@@ -94,10 +99,10 @@ export const NewOrder = () => {
             <DateSelect startDate={startDate} endDate={endDate} onChange={onDateChange} isDisabled={filter.locationId === undefined} />
           </Field>
 
-          {schedules &&
+          {filteredSchedules && filteredSchedules.length > 0&&
             <Box>
               <Content>
-                {schedules.map((schedule) => {
+                {filteredSchedules.map((schedule) => {
                   const action = <Button color="primary" onClick={() => book(schedule.id)}>Book</Button>;
                   return <ScheduleItem schedule={schedule} action={action} />;
                 })}
@@ -109,10 +114,10 @@ export const NewOrder = () => {
 
       <Message>
         <Message.Header>
-          <span>Upcoming</span>
+          <span>Bookings</span>
         </Message.Header>
         <Message.Body>
-          <HistorialOrders />
+          <HistorialOrders orders={orders} />
         </Message.Body>
       </Message>
     </Container>

@@ -1,8 +1,7 @@
-import { PureUser } from '../../pure-api-service/interfaces/login-response-payload';
+import { PureUser } from '../pure-api-service/login-response-payload';
 import { Auditable } from './auditable';
 
 export type User = Auditable<PureUser & {
-  _id: string;
   password: string;
   exp?: number;
 }>

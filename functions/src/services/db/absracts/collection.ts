@@ -43,7 +43,7 @@ async function bulkGet<T>(collection: string, conditions?: Condition<T>[]): Prom
     for (const doc of snapshot.docs) {
       data.push({
           ...doc.data(),
-          _id: doc.id,
+          id: doc.id,
         } as unknown as T)
     }
     return ok(data);
@@ -113,7 +113,11 @@ export function createCollection<T>(collectionId: string) {
     if (!get_.value.exists) {
       return err(Error('Doc do not exist'));
     }
-    return ok(get_.value.data());
+    const doc = {
+      id: get_.value.id,
+      ...get_.value.data()
+    }
+    return ok(doc);
   }
 
   const _removeUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).delete(), () => Error('Unable to delete'));

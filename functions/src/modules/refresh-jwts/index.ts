@@ -12,7 +12,7 @@ const task = async () => {
     logger.error('Unable to fetch users');
     throw new Error('Task failed');
   }
-  for (const { _id, username, password } of users.value) {
+  for (const { id, username, password } of users.value) {
     const getJwt = await postLogin({ 
       username,
       password
@@ -24,7 +24,7 @@ const task = async () => {
 
     const { user: { jwt }, jwtPayload: { exp } } = getJwt.value;
 
-    await usersCollection.upsert(_id, {
+    await usersCollection.upsert(id, {
       jwt,
       exp,
       updatedAt: firestore.FieldValue.serverTimestamp(),

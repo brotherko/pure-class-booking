@@ -51,7 +51,7 @@ export const task = async () => {
   const ordersMerged = getOrders.value.map((order) => {
     return ({
       ...order,
-      user: users.value.find(user => user._id === order.user._id)
+      user: users.value.find(user => user.id === order.user.id)
     })
   })
 
@@ -70,17 +70,17 @@ export const task = async () => {
 
   const failedCount = responses.filter(res => res.isErr()).length
 
-  const updates = getOrders.value.map(({ _id }, idx) => {
+  const updates = getOrders.value.map(({ id }, idx) => {
     const res = responses[idx];
     if (res.isErr()) {
       return {
-        _id,
+        id,
         status: OrderStatus.FAIL,
         error: res.error.toString(),
       }
     }
     return {
-      _id,
+      id,
       status: OrderStatus.SUCCESS,
       bookingId: res.value
     }
@@ -92,10 +92,10 @@ export const task = async () => {
 
   try {
     await ordersCollection.createMany(updates, (doc) => {
-      if (!doc._id) {
+      if (!doc.id) {
         throw new Error();
       }
-      return doc._id.toString()
+      return doc.id.toString()
     },
     { merge: true, })
 

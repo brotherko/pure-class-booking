@@ -9,7 +9,7 @@ export enum OrderStatus {
 }
 
 export type Order = Auditable<{
-  _id: string;
+  id: string;
   bookingId?: number;
   user: UserBasicInfo;
   schedule: Schedule;
