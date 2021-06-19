@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext, createContext, PropsWithChildren } from "react";
 import { useCookies } from 'react-cookie';
 import { useMutate } from 'restful-react';
-import { User } from '../../../functions/src/types/user';
 import { ApiResponse } from '../../../functions/src/modules/api-service/types/api-response';
+import { User } from '../types/db/user';
 import { useContextSafe } from './useContextSafe';
 import { useMessage } from './useMessage';
 

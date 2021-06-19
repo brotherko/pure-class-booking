@@ -22,7 +22,5 @@
   },
   "include": [
     "./src/**/*.ts",
-    "../functions/src/types/*.ts",
-    "../functions/src/services/db/types/*.ts"
   ]
 }

@@ -1,21 +1,13 @@
 import React, { FormEvent, useEffect, useRef } from 'react';
-import { Hero, Container, Content, Form, Heading, Button, Block } from 'react-bulma-components';
+import { Hero, Container, Form, Button } from 'react-bulma-components';
 import { useHistory } from 'react-router-dom';
-import { useGet, useMutate } from 'restful-react';
-import { AuthContext, useAuth } from '../hooks/useAuth';
-import { useMessage } from '../hooks/useMessage';
+import { useAuth } from '../hooks/useAuth';
 
 const { Input, Label, Field } = Form;
 
 export const Login = () => {
-  const { user, login, logout, isLoading } = useAuth();
+  const { user, login, isLoading } = useAuth();
   const { replace } = useHistory();
-
-
-  const formRef = useRef<{username: any, password: any}>({
-    username: null,
-    password: null
-  });
 
   const usernameRef = useRef<any>(null);
   const passwordRef = useRef<any>(null)
@@ -34,18 +26,20 @@ export const Login = () => {
   }, [replace, user])
 
   return (
-    <Container>
-      <form onSubmit={loginHandler}>
-        <Field>
-          <Label>Username</Label>
-          <Input domRef={usernameRef} />
-        </Field>
-        <Field>
-          <Label>Password</Label>
-          <Input domRef={passwordRef} type="password" />
-        </Field>
-        <Button color="primary" fullwidth loading={isLoading} onClick={loginHandler} submit>Sign In</Button>
-      </form>
-    </Container>
+    <Hero.Body alignItems="center">
+      <Container>
+        <form onSubmit={loginHandler}>
+          <Field>
+            <Label>Username</Label>
+            <Input domRef={usernameRef} />
+          </Field>
+          <Field>
+            <Label>Password</Label>
+            <Input domRef={passwordRef} type="password" />
+          </Field>
+          <Button color="primary" fullwidth loading={isLoading} onClick={loginHandler} submit>Sign In</Button>
+        </form>
+      </Container>
+    </Hero.Body>
   );
 };

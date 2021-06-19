@@ -1,8 +1,7 @@
 import { DateTime } from 'luxon';
 import React, { useEffect, useMemo } from 'react';
 import { Media, Content, Button } from 'react-bulma-components';
-import { useGet } from 'restful-react';
-import { Schedule } from '../../../functions/src/services/db/types/schedule';
+import { Schedule } from '../types/db/schedule';
 
 export type ScheduleFilter = {
   locationId?: number,
@@ -10,12 +9,10 @@ export type ScheduleFilter = {
   date?: DateTime,
 };
 
-export const ScheduleList = ({ schedules, action }:
-  { schedules: Schedule[], action: (schedule: Schedule) => JSX.Element }) => {
+export const ScheduleItem = ({ schedule, action }:
+  { schedule: Schedule, action: JSX.Element }) => {
 
   return (
-    <div>
-    {schedules && schedules.map((schedule) => (
       <Media key={schedule.id}>
         <Media.Item>
           <Content>
@@ -26,11 +23,9 @@ export const ScheduleList = ({ schedules, action }:
           </Content>
         </Media.Item>
           <Media.Item align="right">
-            {action(schedule)}
+            {action}
           </Media.Item>
       </Media>
-    ))}
-  </div>
   )
 
 }

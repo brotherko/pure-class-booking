@@ -2,12 +2,12 @@ import React from 'react';
 import './App.css';
 import { Hero } from 'react-bulma-components';
 import { RestfulProvider } from 'restful-react';
-import { AuthProvider, useAuth } from './hooks/useAuth';
+import { AuthProvider } from './hooks/useAuth';
 import { MessageProvider, useMessage } from './hooks/useMessage';
 import { Notification } from './components/Notification';
-import { AppRoute } from './AppRoute';
 import { useCookies } from 'react-cookie';
-import { Header } from './components/Header';
+import { HistorialOrders } from './components/HistorialOrders';
+import { AppRoute } from './AppRoute';
 
 type response = {
   data?: any,
@@ -26,6 +26,7 @@ const ApiProvider: React.FC = ({ children }) => {
       const message = (err.data as response).message || err.message
       error(message);
     }}
+    resolve={data => data.data}
     requestOptions={() => ({ headers: { Authorization: token } })}
   >{children}
   </RestfulProvider>;
@@ -42,11 +43,9 @@ function App() {
             <Hero size="fullheight">
               <Hero.Header>
                 <Notification />
-                <Header />
+                {/* <Header /> */}
               </Hero.Header>
-              <Hero.Body>
-                <AppRoute />
-              </Hero.Body>
+              <AppRoute />
             </Hero>
           </div>
         </AuthProvider>

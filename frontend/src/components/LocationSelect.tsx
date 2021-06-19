@@ -1,27 +1,29 @@
 import React, { useMemo, useState } from 'react';
+import { Location } from '../types/db/location';
 import { useGet } from 'restful-react';
 import Select from 'react-select';
-import { ApiResponse } from '../../../functions/src/modules/api-service/types/api-response';
-import { Location } from '../../../functions/src/services/db/types/location';
 
-export const LocationSelect = () => {
-  const { data: raw, loading } = useGet<ApiResponse<Location[]>>({
-    path: 'locations'
+export const LocationSelect = ({ onChange }) => {
+  const { data: locations, loading } = useGet<Location[]>({
+    path: 'locations',
+    resolve: data => {
+      return data.data
+    }
   })
   const options = useMemo(() => {
-    if (!raw) {
-      return []
+    console.log(locations);
+    if (locations) {
+      const transformed = locations.map((location) => ({
+        label: location.names.en,
+        value: location.id,
+      }))
+      return transformed
+
     }
-    const { data: locations } = raw;
-    const transformed = locations.map((location) => ({
-      label: location.names.en,
-      value: location.id,
-    }))
-    return transformed
-  }, [raw])
+  }, [locations])
 
   return (
-    <Select options={options} isLoading={loading} />
+    <Select options={options} isLoading={loading} onChange={onChange} />
   )
 
 }

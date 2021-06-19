@@ -1,27 +1,25 @@
-import React, { useMemo, useState } from 'react';
-import { useGet } from 'restful-react';
-import Select from 'react-select';
-import { ApiResponse } from '../../../functions/src/modules/api-service/types/api-response';
-import { Location } from '../../../functions/src/services/db/types/location';
+import { DateTime, Duration, Interval } from 'luxon';
+import React, {  } from 'react';
+import Select, { IndicatorProps } from 'react-select';
+import { SelectComponentsProps } from 'react-select/src/Select';
 
-export const DateSelect = () => {
-  const { data: raw, loading } = useGet<ApiResponse<Location[]>>({
-    path: 'locations'
-  })
-  const options = useMemo(() => {
-    if (!raw) {
-      return []
-    }
-    const { data: locations } = raw;
-    const transformed = locations.map((location) => ({
-      label: location.names.en,
-      value: location.id,
-    }))
-    return transformed
-  }, [raw])
+function* mapDay(interval) {
+  let cursor = interval.start.startOf("day");
+  while (cursor < interval.end) {
+    yield cursor;
+    cursor = cursor.plus({ days: 1 });
+  }
+}
+
+export const DateSelect = ({ startDate, endDate, ...rest }: SelectComponentsProps & { startDate: DateTime, endDate: DateTime }) => {
+  const interval = Interval.fromDateTimes(startDate, endDate)
+  const options = Array.from(mapDay(interval)).map((date) => ({
+    label: date.toFormat('yyyy-LL-dd cccc'),
+    value: date,
+  }))
 
   return (
-    <Select options={options} isLoading={loading} />
+    <Select options={options} {...rest} />
   )
 
 }
