@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
-import { db } from '../../utils/db-helper';
 import logger from '../../utils/logger';
+import { db } from '../db/absracts/collection';
 import { DEFAULT_HEADERS, PURE_API_URL } from './constants';
 
 let pureApi: AxiosInstance;

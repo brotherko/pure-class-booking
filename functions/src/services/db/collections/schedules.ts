@@ -1,9 +1,10 @@
+import { Schedule } from '../../../types/db/schedule';
 import { Condition, createCollection } from '../absracts/collection';
-import { Schedule } from '../types/schedule';
 
 const basic = createCollection<Schedule>('classes');
 
-const getByLocation = (locationId: string) => {
+const getByLocation = (locationId: number) => {
+  console.log(locationId);
   const conds: Condition<Schedule>[] = [{
     key: 'location_id',
     op: '==',
@@ -11,6 +12,7 @@ const getByLocation = (locationId: string) => {
   }];
   return basic.getMany(conds);
 }
+
 const getByDateRange = (startDate: Date) => {
   const conds: Condition<Schedule>[] = [];
   conds.push({
@@ -24,5 +26,4 @@ const getByDateRange = (startDate: Date) => {
 export const schedulesCollection = {
   ...basic,
   getByLocation,
-  getByDateRange
 }

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from 'firebase-functions';
 import { deleteUserOrder, ordersCollection, schedulesCollection, usersCollection } from '../../../services/db';
-import { OrderStatus } from '../../../services/db/types/order';
+import { OrderStatus } from '../../../types/db/order';
 
 export const OrdersRoute = {
   get: async (req: Request, res: Response, next: NextFunction) => {
@@ -11,7 +11,7 @@ export const OrdersRoute = {
       return next(Error('Unable to fetch orders'))
     }
     return res.json({
-      data: orders
+      data: orders.value
     });
   },
 
@@ -21,25 +21,29 @@ export const OrdersRoute = {
     if (!classId) {
       return next(Error('class Id not found'));
     }
-    const getSchedule = await schedulesCollection.get(classId);
-    const getUserBasicInfo = await usersCollection.getBasicInfo(uid);
-    if (getUserBasicInfo.isErr() || getSchedule.isErr()) {
-      logger.error(`Unable to find user[${uid}] / schedule[${classId}] info from DB`)
-      return next(Error('Internal error'));
-    }
+    try {
+      const getSchedule = await schedulesCollection.get(classId);
+      const getUserBasicInfo = await usersCollection.getBasicInfo(uid);
+      if (getUserBasicInfo.isErr() || getSchedule.isErr()) {
+        logger.error(`Unable to find user[${uid}] / schedule[${classId}] info from DB`)
+        return next(Error('Internal error'));
+      }
 
-    const getCreateOrder = await ordersCollection.create({
-      schedule: getSchedule.value,
-      user: getUserBasicInfo.value,
-      status: OrderStatus.PENDING,
-    })
-    if (getCreateOrder.isErr()) {
-      return next(Error('Unable to create order'))
+      const getCreateOrder = await ordersCollection.create({
+        schedule: getSchedule.value,
+        user: getUserBasicInfo.value,
+        status: OrderStatus.PENDING,
+      })
+      if (getCreateOrder.isErr()) {
+        return next(Error('Unable to create order'))
+      }
+      return res.json({
+        data: {},
+        message: 'Order has been created'
+      })
+    } catch(e) {
+      return next(e)
     }
-    return res.json({
-      data: {},
-      message: 'Order has been created'
-    })
   },
 
   delete: async (req: Request, res: Response, next: NextFunction) => {

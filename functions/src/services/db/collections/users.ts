@@ -1,7 +1,7 @@
-import { User, UserBasicInfo } from '../types/user';
 import { createCollection } from '../absracts/collection';
 import _ from 'lodash';
 import { err, ok, Result } from 'neverthrow';
+import { User, UserBasicInfo } from '../../../types/db/user';
 
 const basic = createCollection<User>('users');
 

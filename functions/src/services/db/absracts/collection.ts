@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 import _ from 'lodash';
 import logger from '../../../utils/logger';
 import { firestore } from 'firebase-admin';
-import { Auditable } from '../types/auditable';
+import { Auditable } from '../../../types/db/auditable';
 
 export const db = admin.firestore();
 

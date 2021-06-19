@@ -1,4 +1,4 @@
- import { Order, OrderStatus } from '../types/order';
+import { Order, OrderStatus } from '../../../types/db/order';
 import { Condition, createCollection } from '../absracts/collection';
 
 const basic = createCollection<Order>('orders');

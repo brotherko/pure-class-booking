@@ -2,7 +2,7 @@ import { PURE_HOME_URL } from './consts';
 import axios from 'axios';
 import * as functions from 'firebase-functions';
 import logger from '../../utils/logger';
-import { db } from '../../utils/db-helper';
+import { db } from '../../services/db/absracts/collection';
 
 const getHeaders = async () => {
   logger.info('Preparing extra header to deal with crosssite scripting');

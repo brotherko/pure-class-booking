@@ -1,11 +1,10 @@
 import { postBooking } from '../../services/pure-api-service';
-import { BookingRequestPayload } from '../../services/pure-api-service/interfaces/booking-request-payload';
-import { OrderStatus } from '../../services/db/types/order';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { err, ok, Result } from 'neverthrow';
 import { ordersCollection, usersCollection } from '../../services/db';
-import { downloadClassesHttp } from '../download-classes';
+import { OrderStatus } from '../../types/db/order';
+import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
 
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese

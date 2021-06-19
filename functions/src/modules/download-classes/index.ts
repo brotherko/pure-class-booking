@@ -1,14 +1,13 @@
-import { ViewScheduleRequestParams } from '../../services/pure-api-service/interfaces/view-schedule-request-param';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { getClassesData, getLocationRaw } from '../../services/pure-api-service';
 import { DateTime, Duration } from 'luxon';
-import { PureSchedule } from '../../services/pure-api-service/interfaces/class';
 import { err, ok } from 'neverthrow';
 import _ from 'lodash';
-import { schedule } from 'firebase-functions/lib/providers/pubsub';
 import { schedulesCollection } from '../../services/db';
 import { locationsCollection } from '../../services/db/collections/locations';
+import { PureSchedule } from '../../types/pure-api-service/class';
+import { ViewScheduleRequestParams } from '../../types/pure-api-service/view-schedule-request-param';
 
 const params: ViewScheduleRequestParams = {
   "language_id":1,

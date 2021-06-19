@@ -22,7 +22,7 @@ app
   .delete('/orders/:id', OrdersRoute.delete)
 
 app
-  .get('/schedules', ScheduleRoute.get)
+  .get('/schedules/location/:locationId', ScheduleRoute.getByLocation)
 
 app
   .get('/locations', LocationsRoute.get)

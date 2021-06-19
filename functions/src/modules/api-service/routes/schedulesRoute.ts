@@ -4,8 +4,8 @@ import { schedulesCollection } from '../../../services/db';
 
 export const ScheduleRoute = {
   getByLocation: async (req: Request<{ locationId: string }>, res: Response, next: NextFunction) => {
-    const { locationId } = req.query;
-    const getSchedules = await schedulesCollection.getByLocation(locationId as string);
+    const { locationId } = req.params;
+    const getSchedules = await schedulesCollection.getByLocation(parseInt(locationId));
     if (getSchedules.isErr()) {
       return next(Error('Not able to get schedules'))
     }

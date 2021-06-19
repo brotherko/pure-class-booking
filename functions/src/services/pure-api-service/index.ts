@@ -1,18 +1,18 @@
 import jwtDecode from 'jwt-decode';
 import _ from 'lodash';
 import { err, ok, Result, ResultAsync } from 'neverthrow';
+import { ApiResponse } from '../../types/pure-api-service/api-response';
+import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
+import { BookingResponsePayload } from '../../types/pure-api-service/booking-response-payload';
+import { LoginRequestPayload } from '../../types/pure-api-service/login-request-payload';
+import { PureUser, LoginResponsePayload } from '../../types/pure-api-service/login-response-payload';
+import { ViewLocationRequestParams } from '../../types/pure-api-service/view-location-request-param';
+import { ViewLocationResponsePayload } from '../../types/pure-api-service/view-location-response-payload';
+import { ViewScheduleRequestParams } from '../../types/pure-api-service/view-schedule-request-param';
+import { ViewScheduleResponsePayload } from '../../types/pure-api-service/view-schedule-response-payload';
 import { PureJwtPayload } from '../../types/pure-jwt-payload';
 import { PURE_API_ENDPOINT } from './constants';
 import { getInstance } from './helper';
-import { ApiResponse } from './interfaces/api-response';
-import { BookingRequestPayload } from './interfaces/booking-request-payload';
-import { BookingResponsePayload } from './interfaces/booking-response-payload';
-import { LoginRequestPayload } from './interfaces/login-request-payload';
-import { LoginResponsePayload, PureUser } from './interfaces/login-response-payload';
-import { ViewLocationRequestParams } from './interfaces/view-location-request-param';
-import { ViewLocationResponsePayload } from './interfaces/view-location-response-payload';
-import { ViewScheduleRequestParams } from './interfaces/view-schedule-request-param';
-import { ViewScheduleResponsePayload } from './interfaces/view-schedule-response-payload';
 
 // export const getHome = async () => {
 //   const api = await getInstance();
