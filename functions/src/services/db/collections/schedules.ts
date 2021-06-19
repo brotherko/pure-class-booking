@@ -13,6 +13,7 @@ const getByLocation = (locationId: number) => {
   return basic.getMany(conds);
 }
 
+//TODO: to remove?
 const getByDateRange = (startDate: Date) => {
   const conds: Condition<Schedule>[] = [];
   conds.push({
@@ -26,4 +27,5 @@ const getByDateRange = (startDate: Date) => {
 export const schedulesCollection = {
   ...basic,
   getByLocation,
+  getByDateRange
 }

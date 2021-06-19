@@ -116,7 +116,7 @@ export function createCollection<T>(collectionId: string) {
     const doc = {
       id: get_.value.id,
       ...get_.value.data()
-    }
+    } as T
     return ok(doc);
   }
 
