@@ -1,49 +1,19 @@
-import { err, ok, Result, ResultAsync } from 'neverthrow';
-import { db, bulkGet, Condition } from '../../../utils/db-helper';
- import { Order, OrderJoinUser, OrderStatus } from '../../../types/order';
-import { logger } from 'firebase-functions';
-import { usersCollection } from './users';
+ import { Order, OrderStatus } from '../types/order';
+import { Condition, createCollection } from '../absracts/collection';
 
- const COLLECTION = 'orders';
-
-export const createOrder = (order: Partial<Order>) => {
-  const payload = {
-    status: OrderStatus.PENDING,
-    ...order,
-  }
-  return ResultAsync.fromPromise(db.collection(COLLECTION).add(payload), () => Error('Unable to create order in DB'));
-}
+const basic = createCollection<Order>('orders');
 
 export const deleteUserOrder = async (id: string, userId: string) => {
-  const getOrder_ = await getOrder(id);
-  if (getOrder_.isErr()) {
-    return err(getOrder_.error);
-  }
-  if (!getOrder_.value.exists) {
-    return err(Error('Order do not exist'));
-  }
-  const order = getOrder_.value.data() as Order;
-  if (order.userId !== userId) {
-    err(Error('Permission deney'));
-  }
-  const getOrderDelete = await deleteOrderUnsafe(id);
-  if (getOrderDelete.isErr()) {
-    logger.error(getOrderDelete.error.message)
-    return err(getOrderDelete.error)
-  }
-  return ok(order);
+  return basic.delete(id, (doc) => {
+    return doc.user.id === userId;
+  })
 }
 
-export const deleteOrderUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(COLLECTION).doc(id).delete(), () => Error('Unable to get order in DB'));
-
-export const getOrder = (id: string) => ResultAsync.fromPromise(db.collection(COLLECTION).doc(id).get(), () => Error('Unable to get order in DB'));
-
-export const getOrders = (conditions: Partial<Order>) => {
-  const { userId, status } = conditions;
-  const conds: Condition[] = [];
+export const getUserOrders = (userId: string, status?: OrderStatus) => {
+  const conds: Condition<Order>[] = [];
   if (userId) {
     conds.push({
-      key: 'userId',
+      key: 'user.id',
       op: '==',
       value: userId
     })
@@ -55,21 +25,11 @@ export const getOrders = (conditions: Partial<Order>) => {
       value: status
     })
   }
-  return bulkGet<Order>(COLLECTION, conds);
+  return basic.getMany(conds);
 }
 
-export const getFullOrders = async (conditions: Partial<Order>): Promise<Result<OrderJoinUser[], Error>> => {
-  const orders = await getOrders(conditions);
-  const users = await usersCollection.getMany();
-
-  if (orders.isErr() || users.isErr()) {
-    logger.error(`Can not fetch orders or users data`);
-    return err(Error('Order fetching error'));
-  }
-  const merged = orders.value.map(order => ({
-      ...order,
-      user: users.value.find(user => user._id === order.userId)
-    })) as OrderJoinUser[]
-
-  return ok(merged);
-};
+export const ordersCollection = {
+  ...basic,
+  deleteUserOrder,
+  getUserOrders,
+}

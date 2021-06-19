@@ -3,10 +3,12 @@ import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { getClassesData, getLocationRaw } from '../../services/pure-api-service';
 import { DateTime, Duration } from 'luxon';
-import { bulkWrite, db } from '../../utils/db-helper';
-import { ClassSchedule } from '../../services/pure-api-service/interfaces/class';
-import { err } from 'neverthrow';
+import { PureSchedule } from '../../services/pure-api-service/interfaces/class';
+import { err, ok } from 'neverthrow';
 import _ from 'lodash';
+import { schedule } from 'firebase-functions/lib/providers/pubsub';
+import { schedulesCollection } from '../../services/db';
+import { locationsCollection } from '../../services/db/collections/locations';
 
 const params: ViewScheduleRequestParams = {
   "language_id":1,
@@ -38,12 +40,12 @@ const fetchRawSchedules = async (startDate: string) => {
   }
 }
 
-const transformSchedules = (schedules: ClassSchedule[]) => {
+const transformSchedules = (schedules: PureSchedule[]) => {
   return schedules.map((schedule) => ({
     ...schedule,
     start_datetime: new Date(schedule.start_datetime),
     end_datetime: new Date(schedule.end_datetime)
-  })) as ClassSchedule[]
+  })) as PureSchedule[]
 }
 
 const downloadClassData = async (startDate: string) => {
@@ -51,8 +53,11 @@ const downloadClassData = async (startDate: string) => {
     const raw = await fetchRawSchedules(startDate);
     const transformed = transformSchedules(raw);
 
-    const getWrite = await bulkWrite(transformed, {
-      getRef: (doc) => db.collection('classes').doc(doc.id.toString()),
+    const getWrite = await schedulesCollection.createMany(transformed, (doc) => {
+      if (!doc.id) {
+        throw new Error();
+      }
+      return doc.id.toString()
     })
 
     if (getWrite.isOk()) {
@@ -78,13 +83,18 @@ const downloadLocations = async () => {
   if (!locations) {
     logger.error('location not found in payload')
   }
-  const getWrite = await bulkWrite(locations, {
-    getRef: (doc) => db.collection('locations').doc(doc.id.toString()),
+  const getWrite = await locationsCollection.createMany(locations, (doc) => {
+    if (!doc.id) {
+      throw new Error();
+    }
+    return doc.id.toString()
   })
 
-  if (getWrite.isOk()) {
+  if (getWrite.isErr()) {
     logger.info(`saved`)
+    return err(Error('Can not save'));
   }
+  return ok(true);
 }
 
 const task = async () => {
@@ -92,7 +102,7 @@ const task = async () => {
 
   logger.info(`starting to get class data from ${date}`)
 
-  await downloadClassData(date);
+  // await downloadClassData(date);
   await downloadLocations();
 
   logger.info(`class data - OK`)

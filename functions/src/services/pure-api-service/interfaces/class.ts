@@ -20,7 +20,7 @@ export interface Teacher {
   type: string;
 }
 
-export interface ClassSchedule {
+export interface PureSchedule {
   id: number;
   sector: string;
   class_type_id: number;

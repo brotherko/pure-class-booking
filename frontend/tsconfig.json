@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "strict": true,
+    "strict": false,
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
@@ -22,6 +22,7 @@
   },
   "include": [
     "./src/**/*.ts",
-    "../functions/src"
+    "../functions/src/types/*.ts",
+    "../functions/src/services/db/types/*.ts"
   ]
 }

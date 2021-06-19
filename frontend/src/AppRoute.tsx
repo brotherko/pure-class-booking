@@ -6,7 +6,7 @@ import {
   Route
 } from "react-router-dom";
 import { useAuth } from './hooks/useAuth';
-import { Order } from './components/Order';
+import { NewOrder } from './components/NewOrder';
 
 export const AppRoute = () => {
   const { user }  = useAuth();
@@ -14,7 +14,7 @@ export const AppRoute = () => {
     <Router>
       <Switch>
         <Route path="/">
-          {user && <Order /> || <Login />}
+          {(user && <NewOrder />) || <Login />}
         </Route>
       </Switch>
     </Router>

@@ -3,5 +3,5 @@ export type BookingRequestPayload = {
   region_id: number;
   booked_from: string;
   book_type: number;
-  class_id?: string;
+  class_id?: string | number;
 };

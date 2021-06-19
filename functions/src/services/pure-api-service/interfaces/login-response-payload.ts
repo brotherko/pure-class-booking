@@ -1,5 +1,3 @@
-import { PureUserCredential } from '../../../types/pure-user-credential';
-
 export type PureUser = {
   id: string;
   username: string;

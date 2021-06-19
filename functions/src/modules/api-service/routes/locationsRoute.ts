@@ -8,6 +8,8 @@ export const LocationsRoute = {
     if (get.isErr()) {
       return next(Error('Not able to get locations'))
     }
-    return res.json(get.value);
+    return res.json({
+      data: get.value
+    });
   },
 }

@@ -1,5 +1,5 @@
-import { Location } from './location';
+import { PureLocation } from './location';
 
 export interface ViewLocationResponsePayload {
-    locations: Location[]
+    locations: PureLocation[]
 }

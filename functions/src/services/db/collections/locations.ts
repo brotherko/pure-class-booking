@@ -1,10 +1,7 @@
-import { ResultAsync } from 'neverthrow';
-import { bulkGet, db } from '../../../utils/db-helper';
-import { User } from '../../../types/user';
-import { Location } from '../../pure-api-service/interfaces/location';
 import { createCollection } from '../absracts/collection';
+import { Location } from '../types/location';
 
-const basic = createCollection<Location>('location');
+const basic = createCollection<Location>('locations');
 
 export const locationsCollection = {
   ...basic,

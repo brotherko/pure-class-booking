@@ -2,8 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import jwtDecode from 'jwt-decode';
 import { PureJwtPayload } from '../../../types/pure-jwt-payload';
 
-
-
 export const expressJwtAuth = () => {
   const _jwtAuth = (req: Request, res: Response, next: NextFunction) => {
 

@@ -18,7 +18,7 @@ interface District {
   en: string;
 }
 
-export interface Location {
+export interface PureLocation {
   id: number;
   code: string;
   image_link: string;

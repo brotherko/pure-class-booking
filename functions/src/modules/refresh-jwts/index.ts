@@ -2,11 +2,12 @@ import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { delay } from '../../utils/delay';
 import { firestore } from 'firebase-admin';
-import { getUsers, upsertUser } from '../../services/db';
 import { postLogin } from '../../services/pure-api-service';
+import { usersCollection } from '../../services/db';
 
 const task = async () => {
-  const users = await getUsers();
+  const users = await usersCollection.getMany();
+  // TODO: only get those need to make order?
   if (users.isErr()) {
     logger.error('Unable to fetch users');
     throw new Error('Task failed');
@@ -23,7 +24,7 @@ const task = async () => {
 
     const { user: { jwt }, jwtPayload: { exp } } = getJwt.value;
 
-    await upsertUser(_id, {
+    await usersCollection.upsert(_id, {
       jwt,
       exp,
       updatedAt: firestore.FieldValue.serverTimestamp(),

@@ -1,14 +1,12 @@
 import { NextFunction, Request, Response } from 'express';
 import { logger } from 'firebase-functions';
-import { createOrder, deleteUserOrder, getOrders } from '../../../services/db';
-import { Order, OrderStatus } from '../../../types/order';
+import { deleteUserOrder, ordersCollection, schedulesCollection, usersCollection } from '../../../services/db';
+import { OrderStatus } from '../../../services/db/types/order';
 
 export const OrdersRoute = {
   get: async (req: Request, res: Response, next: NextFunction) => {
     const { uid } = req.jwtPayload;
-    const orders = await getOrders({
-      userId: uid,
-    });
+    const orders = await ordersCollection.getUserOrders(uid);
     if (orders.isErr()) {
       return next(Error('Unable to fetch orders'))
     }
@@ -16,27 +14,34 @@ export const OrdersRoute = {
       data: orders
     });
   },
-  post: async (req: Request, res: Response, next: NextFunction) => {
+
+  post: async (req: Request<{ classId: string }>, res: Response, next: NextFunction) => {
     const { uid } = req.jwtPayload;
-    const { classId } = req.body as Pick<Order, 'classId'>;
+    const { classId } = req.body;
     if (!classId) {
       return next(Error('class Id not found'));
     }
-    const getCreateOrder = await createOrder({
-      userId: uid,
-      classId,
-      status: OrderStatus.PENDING
+    const getSchedule = await schedulesCollection.get(classId);
+    const getUserBasicInfo = await usersCollection.getBasicInfo(uid);
+    if (getUserBasicInfo.isErr() || getSchedule.isErr()) {
+      logger.error(`Unable to find user[${uid}] / schedule[${classId}] info from DB`)
+      return next(Error('Internal error'));
+    }
+
+    const getCreateOrder = await ordersCollection.create({
+      schedule: getSchedule.value,
+      user: getUserBasicInfo.value,
+      status: OrderStatus.PENDING,
     })
     if (getCreateOrder.isErr()) {
       return next(Error('Unable to create order'))
     }
     return res.json({
-      data: {
-        id: getCreateOrder.value.id,
-      },
+      data: {},
       message: 'Order has been created'
     })
   },
+
   delete: async (req: Request, res: Response, next: NextFunction) => {
     const { params: { id } = { } } = req;
     const { uid } = req.jwtPayload;

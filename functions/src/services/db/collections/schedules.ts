@@ -1,12 +1,18 @@
-import { ResultAsync } from 'neverthrow';
-import { bulkGet, Condition } from '../../../utils/db-helper';
-import { ClassSchedule } from '../../pure-api-service/interfaces/class';
-import { createCollection } from '../absracts/collection';
+import { Condition, createCollection } from '../absracts/collection';
+import { Schedule } from '../types/schedule';
 
-const basic = createCollection<ClassSchedule>('classes');
+const basic = createCollection<Schedule>('classes');
 
-const getByDateRange = (startDate: Date, endDate: Date) => {
-  const conds: Condition[] = [];
+const getByLocation = (locationId: string) => {
+  const conds: Condition<Schedule>[] = [{
+    key: 'location_id',
+    op: '==',
+    value: locationId
+  }];
+  return basic.getMany(conds);
+}
+const getByDateRange = (startDate: Date) => {
+  const conds: Condition<Schedule>[] = [];
   conds.push({
     key: 'start_datetime',
     op: '>',
@@ -15,7 +21,8 @@ const getByDateRange = (startDate: Date, endDate: Date) => {
   return basic.getMany(conds);
 }
 
-export const scheduleCollection = {
+export const schedulesCollection = {
   ...basic,
+  getByLocation,
   getByDateRange
 }
