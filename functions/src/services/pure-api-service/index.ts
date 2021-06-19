@@ -1,8 +1,9 @@
 import jwtDecode from 'jwt-decode';
 import _ from 'lodash';
-import { err, ok, Result } from 'neverthrow';
-import { JwtPayload } from '../../types/pure-jwt-payload';
+import { err, ok, Result, ResultAsync } from 'neverthrow';
+import { PureJwtPayload } from '../../types/pure-jwt-payload';
 import { PureUserCredential } from '../../types/pure-user-credential';
+import { User } from '../../types/user';
 import logger from '../../utils/logger';
 import { PURE_API_ENDPOINT } from './constants';
 import { getInstance } from './helper';
@@ -10,7 +11,9 @@ import { ApiResponse } from './interfaces/api-response';
 import { BookingRequestPayload } from './interfaces/booking-request-payload';
 import { BookingResponsePayload } from './interfaces/booking-response-payload';
 import { LoginRequestPayload } from './interfaces/login-request-payload';
-import { LoginResponsePayload } from './interfaces/login-response-payload';
+import { LoginResponsePayload, PureUser } from './interfaces/login-response-payload';
+import { ViewLocationRequestParams } from './interfaces/view-location-request-param';
+import { ViewLocationResponsePayload } from './interfaces/view-location-response-payload';
 import { ViewScheduleRequestParams } from './interfaces/view-schedule-request-param';
 import { ViewScheduleResponsePayload } from './interfaces/view-schedule-response-payload';
 
@@ -18,12 +21,45 @@ import { ViewScheduleResponsePayload } from './interfaces/view-schedule-response
 //   const api = await getInstance();
 // }
 
-const postLogin = async (payload: LoginRequestPayload) => {
+export const postLogin = async (payload: Partial<LoginRequestPayload>): Promise<Result<{
+  user: PureUser,
+  jwtPayload: PureJwtPayload,
+}, Error>> => {
   const api = await getInstance();
-  return api.post<ApiResponse<LoginResponsePayload>>(
+
+  const defaultPayload: LoginRequestPayload = {
+    language_id: 1,
+    region_id: 1,
+    jwt: true,
+    platform: 'Web',
+  };
+
+  const getPostLogin = await ResultAsync.fromPromise(api.post<ApiResponse<LoginResponsePayload>>(
     PURE_API_ENDPOINT.LOGIN,
-    payload,
-  );
+    {
+      ...defaultPayload,
+      ...payload,
+    }
+  ), () => Error('postLogin'));
+
+  if (getPostLogin.isErr()) {
+    return err(getPostLogin.error)
+  }
+
+  const user = _.get(getPostLogin.value, ['data', 'data', 'user']);
+  if (!user) {
+    return err(Error('Unable to perform login'));
+  }
+
+  const { jwt } = user;
+  const jwtPayload = jwtDecode<PureJwtPayload>(jwt);
+  if (!jwtPayload) {
+    return err(Error('Unable to decode jwt'));
+  }
+  return ok({
+    user,
+    jwtPayload
+  })
 }
 
 export const postBooking = async (payload: BookingRequestPayload, jwt: string) => {
@@ -48,29 +84,11 @@ export const getClassesData = async (params: ViewScheduleRequestParams) => {
   )
 }
 
-export const getPureJwt = async ({ username, password }: PureUserCredential): Promise<Result<[string, JwtPayload], Error>> => {
-  const reqPayload: LoginRequestPayload = {
-    language_id: 1,
-    region_id: 1,
-    jwt: true,
-    platform: 'Web',
-    username,
-    password,
-  };
-
-  const data = await postLogin(reqPayload);
-  const jwt = _.get(data, ['data', 'data', 'user', 'jwt']);
-
-  if (!jwt) {
-    return err(Error('JWT not found in the response'));
-  }
-
-  const jwtPayload = jwtDecode<JwtPayload>(jwt);
-  if (!jwtPayload) {
-    return err(Error('Unable to decode jwt'));
-  }
-
-  logger.debug(`retrieve JWT: ${jwt}`);
-
-  return ok([jwt, jwtPayload]);
-};
+export const getLocationRaw = async (params: ViewLocationRequestParams) => {
+  const api = await getInstance();
+  return ResultAsync.fromPromise(api.get<ApiResponse<ViewLocationResponsePayload>>(
+    PURE_API_ENDPOINT.VIEW_LOCATION, { 
+      params,
+    },
+  ), () => Error('getLocationRaw'))
+}

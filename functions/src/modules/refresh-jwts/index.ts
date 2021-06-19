@@ -1,9 +1,9 @@
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
 import { delay } from '../../utils/delay';
-import { getPureJwt } from '../../services/pure-api-service';
 import { firestore } from 'firebase-admin';
 import { getUsers, upsertUser } from '../../services/db';
+import { postLogin } from '../../services/pure-api-service';
 
 const task = async () => {
   const users = await getUsers();
@@ -12,7 +12,7 @@ const task = async () => {
     throw new Error('Task failed');
   }
   for (const { _id, username, password } of users.value) {
-    const getJwt = await getPureJwt({ 
+    const getJwt = await postLogin({ 
       username,
       password
     });
@@ -21,7 +21,7 @@ const task = async () => {
       return;
     }
 
-    const [jwt, { exp }] = getJwt.value;
+    const { user: { jwt }, jwtPayload: { exp } } = getJwt.value;
 
     await upsertUser(_id, {
       jwt,

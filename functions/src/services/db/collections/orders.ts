@@ -1,9 +1,7 @@
 import { err, ok, Result, ResultAsync } from 'neverthrow';
 import { db, bulkGet, Condition } from '../../../utils/db-helper';
  import { Order, OrderJoinUser, OrderStatus } from '../../../types/order';
-import { OrdersRoute } from '../../../modules/api-service/routes/ordersRoute';
 import { logger } from 'firebase-functions';
-import { User } from '../../../types/user';
 import { getUsers } from './users';
 
  const COLLECTION = 'orders';

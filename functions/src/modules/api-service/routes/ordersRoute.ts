@@ -33,8 +33,8 @@ export const OrdersRoute = {
     return res.json({
       data: {
         id: getCreateOrder.value.id,
-        message: 'Order has been created'
-      }
+      },
+      message: 'Order has been created'
     })
   },
   delete: async (req: Request, res: Response, next: NextFunction) => {

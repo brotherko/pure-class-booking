@@ -2,6 +2,7 @@ export const PURE_API_ENDPOINT = {
   LOGIN: 'login',
   BOOKING: 'booking',
   VIEW_SCHEDULE: 'view_schedule',
+  VIEW_LOCATION: 'view_location'
 };
 
 export const DEFAULT_HEADERS = {

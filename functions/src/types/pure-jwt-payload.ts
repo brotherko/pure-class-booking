@@ -1,4 +1,4 @@
-export type JwtPayload = {
+export type PureJwtPayload = {
   iss: string;
   ver: string;
   sub: string;

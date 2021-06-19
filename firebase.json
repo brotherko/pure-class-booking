@@ -1,4 +1,10 @@
 {
   "functions": {
+  },
+  "hosting": {
+    "rewrites": [ {
+      "source": "**",
+      "function": "apiService"
+    } ]
   }
 }

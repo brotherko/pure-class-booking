@@ -3,6 +3,6 @@ export type LoginRequestPayload = {
   region_id: number,
   jwt: boolean,
   platform: 'Web',
-  username: string,
-  password: string,
+  username?: string,
+  password?: string,
 }

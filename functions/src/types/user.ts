@@ -1,10 +1,9 @@
 import { firestore } from 'firebase-admin';
+import { PureUser } from '../services/pure-api-service/interfaces/login-response-payload';
 
-export type User = {
+export type User = PureUser & {
   _id: string;
-  username: string;
   password: string;
-  jwt?: string;
   exp?: number;
   updatedAt: number | firestore.FieldValue;
 }

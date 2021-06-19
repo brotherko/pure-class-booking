@@ -8,11 +8,11 @@ import { err, ok, Result } from 'neverthrow';
 export type Condition = {
   key: string;
   op: FirebaseFirestore.WhereFilterOp;
-  value: string;
+  value: any;
 }
 
 const MAX_WRITES_PER_BATCH = 500;
-type BulkWriteOptions<T> = {
+export type BulkWriteOptions<T> = {
   getRef: (doc: T) => FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>,
   options?: FirebaseFirestore.SetOptions,
 }
@@ -37,22 +37,60 @@ export async function bulkGet<T>(collection: string, conditions?: Condition[]): 
     }
     return ok(data);
   } catch(e) {
-    logger.error(`bulkGet from ${collection} failed`);
+    logger.error(e.message);
     return err(e)
   }
 }
 
-export async function bulkWrite<T>(data: T[], { getRef, options }: BulkWriteOptions<T>) {
+export async function _bulkWrite<T>(collection: string, data: T[], getId: (doc: T) => string, options: FirebaseFirestore.SetOptions) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return err(Error('Incorrect data format'))
+  }
   const chunks = _.chunk(data, MAX_WRITES_PER_BATCH);
 
   logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`)
+  let batchId = 0
 
-  for (const chunk of chunks) {
-    const batch = db.batch();
-    chunk.forEach((doc) => {
-      batch.set(getRef(doc), doc, options || {});
-    })
-    await batch.commit();
-    logger.debug(`done batch save`)
+  try {
+    for (const chunk of chunks) {
+      const batch = db.batch();
+      chunk.forEach((doc) => {
+        batch.set(db.collection(collection).doc(getId(doc)), doc, options || {});
+      })
+      await batch.commit();
+      logger.debug(`Batch #{batchId} - OK`)
+      batchId += 1
+    }
+    return ok(data.length);
+  } catch(e) {
+    logger.error(`Batch write failed at ${batchId}: ${e.message}`)
+    return err(e)
+  }
+}
+
+
+export async function bulkWrite<T>(data: T[], { getRef, options }: BulkWriteOptions<T>) {
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return err(Error('Incorrect data format'))
+  }
+  const chunks = _.chunk(data, MAX_WRITES_PER_BATCH);
+
+  logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`)
+  let batchId = 0
+
+  try {
+    for (const chunk of chunks) {
+      const batch = db.batch();
+      chunk.forEach((doc) => {
+        batch.set(getRef(doc), doc, options || {});
+      })
+      await batch.commit();
+      logger.debug(`Batch #{batchId} - OK`)
+      batchId += 1
+    }
+    return ok(data.length);
+  } catch(e) {
+    logger.error(`Batch write failed at ${batchId}: ${e.message}`)
+    return err(e)
   }
 }

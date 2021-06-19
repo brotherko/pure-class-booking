@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwtDecode from 'jwt-decode';
-import { JwtPayload } from '../../../types/pure-jwt-payload';
+import { PureJwtPayload } from '../../../types/pure-jwt-payload';
 
 
 
@@ -20,7 +20,7 @@ export const expressJwtAuth = () => {
     }
     token = credentials;
 
-    const payload = jwtDecode<JwtPayload>(token)
+    const payload = jwtDecode<PureJwtPayload>(token)
     if (!payload || !payload.uid) {
       return next(Error('Malform Jwt'));
     }

@@ -20,7 +20,7 @@ export interface Teacher {
   type: string;
 }
 
-export interface Class {
+export interface ClassSchedule {
   id: number;
   sector: string;
   class_type_id: number;

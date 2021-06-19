@@ -1,9 +1,12 @@
 import { ViewScheduleRequestParams } from '../../services/pure-api-service/interfaces/view-schedule-request-param';
 import logger from '../../utils/logger';
 import * as functions from 'firebase-functions';
-import { getClassesData } from '../../services/pure-api-service';
+import { getClassesData, getLocationRaw } from '../../services/pure-api-service';
 import { DateTime, Duration } from 'luxon';
 import { bulkWrite, db } from '../../utils/db-helper';
+import { ClassSchedule } from '../../services/pure-api-service/interfaces/class';
+import { err } from 'neverthrow';
+import _ from 'lodash';
 
 const params: ViewScheduleRequestParams = {
   "language_id":1,
@@ -19,7 +22,7 @@ const params: ViewScheduleRequestParams = {
   "include_events":"0"
 }
 
-const fetchClassData = async (startDate: string) => {
+const fetchRawSchedules = async (startDate: string) => {
   try {
     const { data: { error, data: { classes: classData } } } = await getClassesData({
       ...params,
@@ -33,21 +36,54 @@ const fetchClassData = async (startDate: string) => {
   } catch (e) {
     throw new Error(`Unable to fetch class data: ${e}`);
   }
-
 }
+
+const transformSchedules = (schedules: ClassSchedule[]) => {
+  return schedules.map((schedule) => ({
+    ...schedule,
+    start_datetime: new Date(schedule.start_datetime),
+    end_datetime: new Date(schedule.end_datetime)
+  })) as ClassSchedule[]
+}
+
 const downloadClassData = async (startDate: string) => {
-
-  const classData = await fetchClassData(startDate);
-
   try {
-    await bulkWrite(classData, {
+    const raw = await fetchRawSchedules(startDate);
+    const transformed = transformSchedules(raw);
+
+    const getWrite = await bulkWrite(transformed, {
       getRef: (doc) => db.collection('classes').doc(doc.id.toString()),
     })
 
-    logger.info(`Classes[Total: ${classData.length}] Download - OK`);
+    if (getWrite.isOk()) {
+      logger.info(`Classes[Total: ${transformed.length}] Download - OK`);
+    }
 
   } catch(e) {
     throw new Error('Unable to save class data to db');
+  }
+}
+
+const downloadLocations = async () => {
+  const getRaw = await getLocationRaw({
+    language_id: 1,
+    region_id: 1,
+  });
+  if (getRaw.isErr()) {
+    logger.error('Unable to fetch raw location');
+    return err(getRaw.error);
+  }
+  const locations = _.get(getRaw.value, ['data', 'data', 'locations'])
+
+  if (!locations) {
+    logger.error('location not found in payload')
+  }
+  const getWrite = await bulkWrite(locations, {
+    getRef: (doc) => db.collection('locations').doc(doc.id.toString()),
+  })
+
+  if (getWrite.isOk()) {
+    logger.info(`saved`)
   }
 }
 
@@ -57,6 +93,7 @@ const task = async () => {
   logger.info(`starting to get class data from ${date}`)
 
   await downloadClassData(date);
+  await downloadLocations();
 
   logger.info(`class data - OK`)
 }

@@ -1,5 +1,5 @@
-import { Class } from './class';
+import { ClassSchedule } from './class';
 
 export interface ViewScheduleResponsePayload {
-    classes: Class[]
+    classes: ClassSchedule[]
 }
