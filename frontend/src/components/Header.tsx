@@ -1,5 +1,5 @@
 import React from 'react';
-import { Block, Button, Container } from 'react-bulma-components';
+import { Button, Container } from 'react-bulma-components';
 import { useAuth } from '../hooks/useAuth';
 export const Header = () => {
   const { logout } = useAuth();

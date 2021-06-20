@@ -6,7 +6,6 @@ import { AuthProvider } from './hooks/useAuth';
 import { MessageProvider, useMessage } from './hooks/useMessage';
 import { Notification } from './components/Notification';
 import { useCookies } from 'react-cookie';
-import { HistorialOrders } from './components/HistorialOrders';
 import { AppRoute } from './AppRoute';
 import _ from 'lodash';
 

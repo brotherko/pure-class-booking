@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
-import React, { useEffect, useMemo } from 'react';
-import { Media, Content, Button, Tag } from 'react-bulma-components';
+import React, {  } from 'react';
+import { Media, Content } from 'react-bulma-components';
 import { Schedule } from '../types/db/schedule';
 
 export type ScheduleFilter = {

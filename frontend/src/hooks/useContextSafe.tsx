@@ -1,4 +1,4 @@
-import React, { Context, useContext } from 'react';
+import { Context, useContext } from 'react';
 
 export function useContextSafe<T>(context: Context<T | null>): T {
   const contextValue = useContext(context);

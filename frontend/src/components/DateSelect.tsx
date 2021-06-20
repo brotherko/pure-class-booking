@@ -1,6 +1,6 @@
-import { DateTime, Duration, Interval } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import React, {  } from 'react';
-import Select, { IndicatorProps } from 'react-select';
+import Select from 'react-select';
 import { SelectComponentsProps } from 'react-select/src/Select';
 
 function* mapDay(interval) {

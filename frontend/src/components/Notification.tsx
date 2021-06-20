@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Message, Button } from 'react-bulma-components';
 import { useMessage } from '../hooks/useMessage';
 export const Notification = () => {

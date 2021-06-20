@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo } from 'react';
-import { Media, Content, Button, Heading, Container, Box } from 'react-bulma-components';
-import { useGet } from 'restful-react';
+import React, { useMemo } from 'react';
+import { Button, Heading, Box } from 'react-bulma-components';
 import { Order, OrderStatus } from '../types/db/order';
 import _ from 'lodash';
 import { ScheduleItem } from './ScheduleItem';

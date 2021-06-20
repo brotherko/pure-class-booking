@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Form, Container, Media, Content, Box, Hero, Button, Message } from 'react-bulma-components';
+import { Form, Container, Content, Box, Hero, Button, Message } from 'react-bulma-components';
 import { useGet, useMutate } from 'restful-react';
 import { LocationSelect } from './LocationSelect';
 import { DateSelect } from './DateSelect';
@@ -18,7 +18,7 @@ const parseDate = (date: string) => {
 };
 export const NewOrder = () => {
   const [filter, setFilter] = useState<ScheduleFilter>({});
-  const { message, success } = useMessage();
+  const { success } = useMessage();
 
   const { data: orders, refetch: refetchOrders } = useGet<Order[]>({
     path: 'orders',
@@ -38,7 +38,7 @@ export const NewOrder = () => {
   });
 
   const book = async (classId: number) => {
-    const { data, message } = await postBook({
+    const { message } = await postBook({
       classId: classId.toString()
     });
     refetchOrders();

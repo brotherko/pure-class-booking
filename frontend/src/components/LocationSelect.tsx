@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Location } from '../types/db/location';
 import { useGet } from 'restful-react';
 import Select from 'react-select';
