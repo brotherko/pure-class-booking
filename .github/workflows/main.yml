@@ -43,7 +43,7 @@ jobs:
           path: ./frontend/public
   deploy:
     name: Deploy
-    needs: [build-frontned, build-functions]
+    needs: [build-frontend, build-functions]
     runs-on: ubuntu-latest
     defaults:
       run:
