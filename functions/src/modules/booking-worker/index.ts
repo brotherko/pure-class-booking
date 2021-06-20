@@ -32,6 +32,7 @@ const makeBooking = async (jwt: string, classId: string | number): Promise<Resul
 };
 
 export const task = async () => {
+  logger.info("Booking task start")
   const getOrders = await ordersCollection.getMany([{
     key: 'status',
     op: '==',
@@ -106,9 +107,9 @@ export const task = async () => {
   }
 }
 
-export const startBookingJob = functions.pubsub.topic('start-booking').onPublish(async (message) => {
+export const startBookingJob = functions.region('asia-east2').pubsub.topic('start-booking').onPublish(async (message) => {
   if (message.attributes.action === 'warmup') {
-    // do nothing just to wake up the machine
+    logger.info('Warmup confirm')
     return
   } 
   await task();
