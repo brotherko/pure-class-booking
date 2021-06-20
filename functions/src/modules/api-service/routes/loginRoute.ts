@@ -8,6 +8,8 @@ export const loginRoute = {
   post: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body as PureUserCredential;
+      console.log(req.path)
+    
       if (!username || !password) {
         return next(Error('username or password not found'));
       }

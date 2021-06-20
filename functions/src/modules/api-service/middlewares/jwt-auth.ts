@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { logger } from 'firebase-functions';
 import jwtDecode from 'jwt-decode';
 import { PureJwtPayload } from '../../../types/pure-jwt-payload';
 

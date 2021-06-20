@@ -2,8 +2,14 @@
   "functions": {
   },
   "hosting": {
+    "public": "frontend/build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
     "rewrites": [ {
-      "source": "**",
+      "source": "/api/**",
       "function": "apiService"
     } ]
   }

@@ -8,6 +8,7 @@ import { Notification } from './components/Notification';
 import { useCookies } from 'react-cookie';
 import { HistorialOrders } from './components/HistorialOrders';
 import { AppRoute } from './AppRoute';
+import _ from 'lodash';
 
 type response = {
   data?: any,
@@ -17,10 +18,13 @@ type response = {
 const ApiProvider: React.FC = ({ children }) => {
   const { error } = useMessage();
   const [cookies] = useCookies(['user']);
-  const { user: { jwt } } = cookies as any;
-  const token = `Bearer ${jwt}`;
+  const jwt = _.get(cookies, ['user', 'jwt'])
+  let token; 
+  if (jwt) {
+    token = `Bearer ${jwt}`;
+  }
   return <RestfulProvider<response>
-    base={process.env.REACT_APP_API_BASE_URL!}
+    base="/api"
     onError={(err) => {
       console.error(err);
       const message = (err.data as response).message || err.message
