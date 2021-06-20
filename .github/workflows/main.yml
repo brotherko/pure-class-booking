@@ -40,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: frontend
-          path: ./frontend/public
+          path: ./frontend/build
   deploy:
     name: Deploy
     needs: [build-frontend, build-functions]
@@ -60,7 +60,7 @@ jobs:
         uses: actions/download-artifact@master
         with:
           name: frontend
-          path: ./frontend/public
+          path: ./frontend/build
       - name: Install Dependencies
         run: npm install
       - name: Deploy to Firebase
