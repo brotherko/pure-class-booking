@@ -107,11 +107,11 @@ export const task = async () => {
 }
 
 export const startBookingJob = functions.pubsub.topic('start-booking').onPublish(async (message) => {
-  if (message.json.action === 'warmup') {
+  if (message.attributes.action === 'warmup') {
     // do nothing just to wake up the machine
-  } else {
-    await task();
-  }
+    return
+  } 
+  await task();
 })
 
 // export const startBookingJob = functions.pubsub.schedule('00 09 * * *').timeZone('Asia/Hong_Kong').onRun(task);
