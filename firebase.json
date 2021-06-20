@@ -1,5 +1,6 @@
 {
   "functions": {
+    "source": "functions"
   },
   "hosting": {
     "public": "frontend/build",
@@ -8,9 +9,25 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [ {
-      "source": "/api/**",
-      "function": "apiService"
-    } ]
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "apiService"
+      }
+    ]
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "pubsub": {
+      "port": 8085
+    },
+    "ui": {
+      "enabled": true
+    }
   }
 }

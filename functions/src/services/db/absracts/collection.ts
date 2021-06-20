@@ -15,16 +15,9 @@ export type Condition<T> = {
 
 const MAX_WRITES_PER_BATCH = 500;
 
-function addAudit<T>(doc: T) {
+function addTimestamp<T>(doc: T) {
   return ({
-    ...doc,
     createdAt: firestore.FieldValue.serverTimestamp(),
-    updatedAt: firestore.FieldValue.serverTimestamp()
-  } as Auditable<T>) 
-}
-
-function updateAudit<T>(doc: T) {
-  return ({
     ...doc,
     updatedAt: firestore.FieldValue.serverTimestamp()
   } as Auditable<T>) 
@@ -65,7 +58,8 @@ async function bulkWrite<T>(collection: string, data: Partial<T>[], getId: (doc:
   try {
     for (const chunk of chunks) {
       const batch = db.batch();
-      chunk.forEach((doc) => {
+      chunk.forEach((_doc) => {
+        const doc = addTimestamp(_doc);
         batch.set(db.collection(collection).doc(getId(doc)), doc, options || {});
       })
       await batch.commit();
@@ -83,7 +77,7 @@ async function bulkWrite<T>(collection: string, data: Partial<T>[], getId: (doc:
 export function createCollection<T>(collectionId: string) {
 
   const create = (_doc: Partial<T>) => {
-    const doc = addAudit(_doc);
+    const doc = addTimestamp(_doc);
     logger.debug(`create ${collectionId}`, doc)
     return ResultAsync.fromPromise(
       db.collection(collectionId).add(doc) as Promise<FirebaseFirestore.DocumentReference<T>>,
@@ -91,16 +85,9 @@ export function createCollection<T>(collectionId: string) {
     );
   }
 
-  const upsert = async (id: string, doc: Partial<T>) => {
-    const get_ = await getRef(id);
-    let data;
-    if (get_.isErr()){
-      data = addAudit(doc);
-    } else {
-      data = get_.value.exists ? updateAudit(doc) : addAudit(doc);
-    }
-    logger.debug(`upsert ${collectionId}`, data)
-    return ResultAsync.fromPromise(db.collection(collectionId).doc(id).set(data, { merge: true }), () => Error('Unable to upsert user in DB'))
+  const upsert = async (id: string, _doc: Partial<T>) => {
+    const doc = addTimestamp(_doc);
+    return ResultAsync.fromPromise(db.collection(collectionId).doc(id).set(doc, { merge: true }), () => Error('Unable to upsert user in DB'))
   }
 
   const getRef = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).get() as Promise<FirebaseFirestore.DocumentSnapshot<T>>, () => Error('Unable to get by id'));

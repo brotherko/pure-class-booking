@@ -106,5 +106,13 @@ export const task = async () => {
   }
 }
 
-export const startBookingJob = functions.pubsub.schedule('00 09 * * *').timeZone('Asia/Hong_Kong').onRun(task);
+export const startBookingJob = functions.pubsub.topic('start-booking').onPublish(async (message) => {
+  if (message.json.action === 'warmup') {
+    // do nothing just to wake up the machine
+  } else {
+    await task();
+  }
+})
+
+// export const startBookingJob = functions.pubsub.schedule('00 09 * * *').timeZone('Asia/Hong_Kong').onRun(task);
 export const startBookingHttp = functions.https.onRequest(task);
