@@ -46,7 +46,6 @@ function App() {
             <Hero size="fullheight">
               <Hero.Header>
                 <Notification />
-                {/* <Header /> */}
               </Hero.Header>
               <AppRoute />
             </Hero>
