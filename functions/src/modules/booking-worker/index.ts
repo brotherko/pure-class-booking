@@ -5,6 +5,7 @@ import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
 import { OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
+import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese
@@ -119,4 +120,4 @@ export const startBookingJob = functions
     await task();
   });
 
-export const startBookingHttp = functions.https.onRequest(task);
+export const startBookingHttp = functions.https.onRequest(taskHttpResponse(task));

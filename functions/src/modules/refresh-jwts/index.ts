@@ -4,6 +4,7 @@ import logger from '../../utils/logger';
 import { delay } from '../../utils/delay';
 import { postLogin } from '../../services/pure-api-service';
 import { usersCollection } from '../../services/db';
+import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const task = async () => {
   const users = await usersCollection.getMany();
@@ -43,4 +44,4 @@ export const refreshUsersJwtJob = functions.pubsub
   .schedule('55 08 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const refreshUsersJwtHttp = functions.https.onRequest(task);
+export const refreshUsersJwtHttp = functions.https.onRequest(taskHttpResponse(task));

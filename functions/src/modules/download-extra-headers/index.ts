@@ -3,6 +3,7 @@ import * as functions from 'firebase-functions';
 import { PURE_HOME_URL } from './consts';
 import logger from '../../utils/logger';
 import { db } from '../../services/db/absracts/collection';
+import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const getHeaders = async () => {
   logger.info('Preparing extra header to deal with crosssite scripting');
@@ -24,12 +25,17 @@ const getHeaders = async () => {
 };
 
 const task = async () => {
-  const data = await getHeaders();
-  db.collection('configs').doc('extraHeaders').set(data);
+  try {
+    const data = await getHeaders();
+    db.collection('configs').doc('extraHeaders').set(data);
+  } catch (e) {
+    logger.error('Unable to refresh extra headers');
+    throw new Error(e);
+  }
 };
 
 export const refreshExtraHeadersJob = functions.pubsub
   .schedule('00 */1 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const refreshExtraHeadersHttp = functions.https.onRequest(task);
+export const refreshExtraHeadersHttp = functions.https.onRequest(taskHttpResponse(task));

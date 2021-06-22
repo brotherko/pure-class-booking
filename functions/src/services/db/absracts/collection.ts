@@ -2,7 +2,7 @@ import {
   err, ok, Result, ResultAsync,
 } from 'neverthrow';
 import * as admin from 'firebase-admin';
-import _, { update } from 'lodash';
+import _ from 'lodash';
 import { firestore } from 'firebase-admin';
 import logger from '../../../utils/logger';
 import { Auditable } from '../../../types/db/auditable';
@@ -66,7 +66,6 @@ async function bulkWrite<T>(
     return err(Error('Incorrect data format'));
   }
   const chunks = _.chunk(data, MAX_WRITES_PER_BATCH);
-
   logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`);
   let batchId = 0;
 
@@ -78,7 +77,7 @@ async function bulkWrite<T>(
         batch.set(db.collection(collection).doc(doc.id), doc, isUpsert ? { merge: true } : {});
       });
       await batch.commit();
-      logger.debug('Batch #{batchId} - OK');
+      logger.debug(`Batch ${batchId} - OK`);
       batchId += 1;
     }
     return ok(data.length);
@@ -152,7 +151,7 @@ export function createCollection<T>(collectionId: string) {
       logger.error(getDelete.error.message);
       return err(getDelete.error);
     }
-    return ok(getDoc.value);
+    return ok(getDoc.value.data());
   };
 
   const getMany = (conditions?: Condition<T>[]) => bulkGet<T>(collectionId, conditions);

@@ -3,8 +3,13 @@ import { Button, Heading, Box } from 'react-bulma-components';
 import { Order, OrderStatus } from '../types/db/order';
 import _ from 'lodash';
 import { ScheduleItem } from './ScheduleItem';
+import { ActionButton } from './ActionButton';
+import { useMutate } from 'restful-react';
+import { ApiResponse } from '../types/api-response';
+import { useMessage } from '../hooks/useMessage';
 
-export const HistorialOrders = ({ orders }: { orders: Order[] }) => {
+export const HistorialOrders = ({ orders, deleteOrderAction }: { orders: Order[], deleteOrderAction: (id: string) => void }) => {
+
   const ordersByDate = useMemo(() => {
     const t = _.groupBy(orders, (order) => order.schedule.start_date);
     return t;
@@ -13,13 +18,13 @@ export const HistorialOrders = ({ orders }: { orders: Order[] }) => {
   const Action = ({ order }: { order: Order; }) => {
     switch(order.status) {
       case OrderStatus.PENDING: {
-        return <Button disabled>Pending</Button>;
+        return <ActionButton onClick={() => deleteOrderAction(order.id)}>DELETE</ActionButton>;
       }
       case OrderStatus.SUCCESS: {
-        return <Button disabled color="success">Success</Button>;
+        return <ActionButton disabled color="success">Success</ActionButton>;
       }
       case OrderStatus.FAIL: {
-        return <Button disabled color="danger">Failed</Button>;
+        return <ActionButton disabled color="danger">Failed</ActionButton>;
       }
     }
   };

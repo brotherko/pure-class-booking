@@ -10,6 +10,7 @@ import { HistorialOrders } from './HistorialOrders';
 import { Order } from '../types/db/order';
 import { Schedule } from '../types/db/schedule';
 import { ApiResponse } from '../types/api-response';
+import { Header } from './Header';
 
 const { Field, Label } = Form;
 
@@ -20,6 +21,16 @@ export const NewOrder = () => {
   const [filter, setFilter] = useState<ScheduleFilter>({});
   const { success } = useMessage();
 
+  const { mutate: deleteOrder } = useMutate<ApiResponse<Order>>({
+    verb: "DELETE",
+    path: `/orders`,
+  });
+
+  const deleteOrderAction = async (id: string) => {
+    const { message } = await deleteOrder(id);
+    refetchOrders();
+    success(message);
+  }
   const { data: orders, refetch: refetchOrders } = useGet<Order[]>({
     path: 'orders',
     resolve: data => data.data
@@ -85,6 +96,7 @@ export const NewOrder = () => {
 
   return <Hero.Body alignItems="baseline">
     <Container>
+      <Header />
       <Message>
         <Message.Header>
           <span>Search</span>
@@ -114,10 +126,10 @@ export const NewOrder = () => {
 
       <Message>
         <Message.Header>
-          <span>Bookings</span>
+          <span>Bookings (Latest 10 results)</span>
         </Message.Header>
         <Message.Body>
-          <HistorialOrders orders={orders} />
+          <HistorialOrders orders={orders} deleteOrderAction={deleteOrderAction} />
         </Message.Body>
       </Message>
     </Container>

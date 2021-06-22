@@ -1,4 +1,4 @@
-import React, { createContext, useEffect, useState } from 'react';
+import React, { createContext, useEffect, useRef, useState } from 'react';
 import { Color } from 'react-bulma-components/src/components';
 import { useContextSafe } from './useContextSafe';
 export type Message = {
@@ -19,10 +19,12 @@ const messageContext = createContext<MessageContext | null>(null);
 
 export const MessageProvider: React.FC = ({ children }) => {
   const [message, setMessage] = useState<Message|null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   useEffect(() => {
     if (message !== null) {
-      setTimeout(() => {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
         setMessage(null);
       }, MESSAGE_TIMEOUT)
     }

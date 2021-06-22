@@ -65,9 +65,14 @@ export const OrdersRoute = {
     if (getDeleteOrder.isErr()) {
       return next(Error(`Unable to delete order: ${getDeleteOrder.error.message}`));
     }
+    const { value: deletedOrder } = getDeleteOrder;
     return res.json({
       id,
-      message: 'Order has been deleted',
+      message: `Order ${
+        deletedOrder
+          ? `${deletedOrder.schedule.class_type.name}@${deletedOrder.schedule.start_date}`
+          : ''
+      } has been deleted`,
     });
   },
 };

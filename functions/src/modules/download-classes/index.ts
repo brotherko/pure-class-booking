@@ -10,6 +10,7 @@ import { PureSchedule } from '../../types/pure-api-service/class';
 import { ViewScheduleRequestParams } from '../../types/pure-api-service/view-schedule-request-param';
 import { Location } from '../../types/db/location';
 import { Schedule } from '../../types/db/schedule';
+import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const params: ViewScheduleRequestParams = {
   language_id: 1,
@@ -108,4 +109,4 @@ export const downloadClassesJob = functions.pubsub
   .schedule('00 06 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const downloadClassesHttp = functions.https.onRequest(task);
+export const downloadClassesHttp = functions.https.onRequest(taskHttpResponse(task));

@@ -1,15 +1,15 @@
-import { Auditable } from './auditable';
-import { Schedule } from './schedule';
-import { UserBasicInfo } from './user';
+import { Auditable } from "./auditable";
+import { Schedule } from "./schedule";
+import { UserBasicInfo } from "./user";
 
 export enum OrderStatus {
-  SUCCESS = 'SUCCESS',
-  FAIL = 'FAIL',
-  PENDING = 'PENDING',
+  SUCCESS = "SUCCESS",
+  FAIL = "FAIL",
+  PENDING = "PENDING",
 }
 
 export type Order = Auditable<{
-  _id: string;
+  id: string;
   bookingId?: number;
   user: UserBasicInfo;
   schedule: Schedule;
@@ -17,4 +17,4 @@ export type Order = Auditable<{
   createdAt: Date;
   updatedAt: Date;
   error?: string;
-}>
+}>;

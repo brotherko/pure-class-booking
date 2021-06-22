@@ -9,3 +9,4 @@ export * from './modules/refresh-jwts';
 export * from './modules/download-classes';
 export * from './modules/booking-worker';
 export * from './modules/api-service';
+export * from './modules/submit-declaration';
