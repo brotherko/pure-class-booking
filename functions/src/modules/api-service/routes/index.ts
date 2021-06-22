@@ -5,22 +5,19 @@ import { loginRoute } from './loginRoute';
 import { OrdersRoute } from './ordersRoute';
 import { ScheduleRoute } from './schedulesRoute';
 
-const route = Router()
+const route = Router();
 
 route.post('/login', loginRoute.post);
 
-route.use(/^\/(?!login).*/, expressJwtAuth());
+route.use(/^\/(?!login).*/, expressJwtAuth);
 
 route
   .get('/orders', OrdersRoute.get)
   .post('/orders', OrdersRoute.post)
-  .delete('/orders/:id', OrdersRoute.delete)
+  .delete('/orders/:id', OrdersRoute.delete);
 
-route
-  .get('/schedules/location/:locationId', ScheduleRoute.getByLocation)
+route.get('/schedules/location/:locationId', ScheduleRoute.getByLocation);
 
-route
-  .get('/locations', LocationsRoute.get)
+route.get('/locations', LocationsRoute.get);
 
-
-export default route
+export default route;

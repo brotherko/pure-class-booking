@@ -1,8 +1,10 @@
-import { err, ok, Result, ResultAsync } from 'neverthrow';
+import {
+  err, ok, Result, ResultAsync,
+} from 'neverthrow';
 import * as admin from 'firebase-admin';
-import _ from 'lodash';
-import logger from '../../../utils/logger';
+import _, { update } from 'lodash';
 import { firestore } from 'firebase-admin';
+import logger from '../../../utils/logger';
 import { Auditable } from '../../../types/db/auditable';
 
 export const db = admin.firestore();
@@ -11,19 +13,28 @@ export type Condition<T> = {
   key: keyof T | string;
   op: FirebaseFirestore.WhereFilterOp;
   value: any;
-}
+};
 
 const MAX_WRITES_PER_BATCH = 500;
 
-function addTimestamp<T>(doc: T) {
-  return ({
+function createTimestamp<T>(doc: T) {
+  return {
     createdAt: firestore.FieldValue.serverTimestamp(),
     ...doc,
-    updatedAt: firestore.FieldValue.serverTimestamp()
-  } as Auditable<T>) 
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  } as Auditable<T>;
+}
+function updateTimestamp<T>(doc: T) {
+  return {
+    ...doc,
+    updatedAt: firestore.FieldValue.serverTimestamp(),
+  } as Auditable<T>;
 }
 
-async function bulkGet<T>(collection: string, conditions?: Condition<T>[]): Promise<Result<T[], Error>> {
+async function bulkGet<T>(
+  collection: string,
+  conditions?: Condition<T>[],
+): Promise<Result<T[], Error>> {
   let q = db.collection(collection).offset(0);
   if (conditions) {
     for (const { key, op, value } of conditions) {
@@ -35,80 +46,91 @@ async function bulkGet<T>(collection: string, conditions?: Condition<T>[]): Prom
     const snapshot = await q.get();
     for (const doc of snapshot.docs) {
       data.push({
-          ...doc.data(),
-          id: doc.id,
-        } as unknown as T)
+        ...doc.data(),
+        id: doc.id,
+      } as unknown as T);
     }
     return ok(data);
-  } catch(e) {
+  } catch (e) {
     logger.error(e.message);
-    return err(e)
+    return err(e);
   }
 }
 
-async function bulkWrite<T>(collection: string, data: Partial<T>[], getId: (doc: Partial<T>) => string, options?: FirebaseFirestore.SetOptions): Promise<Result<number, Error>> {
+async function bulkWrite<T>(
+  collection: string,
+  data: Partial<T>[],
+  isUpsert?: boolean,
+): Promise<Result<number, Error>> {
   if (!data || !Array.isArray(data) || data.length === 0) {
-    return err(Error('Incorrect data format'))
+    return err(Error('Incorrect data format'));
   }
   const chunks = _.chunk(data, MAX_WRITES_PER_BATCH);
 
-  logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`)
-  let batchId = 0
+  logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`);
+  let batchId = 0;
 
   try {
     for (const chunk of chunks) {
       const batch = db.batch();
       chunk.forEach((_doc) => {
-        const doc = addTimestamp(_doc);
-        batch.set(db.collection(collection).doc(getId(doc)), doc, options || {});
-      })
+        const doc = isUpsert ? updateTimestamp(_doc) : createTimestamp(_doc);
+        batch.set(db.collection(collection).doc(doc.id), doc, isUpsert ? { merge: true } : {});
+      });
       await batch.commit();
-      logger.debug(`Batch #{batchId} - OK`)
-      batchId += 1
+      logger.debug('Batch #{batchId} - OK');
+      batchId += 1;
     }
     return ok(data.length);
-  } catch(e) {
-    logger.error(`Batch write failed at ${batchId}: ${e.message}`)
-    return err(e)
+  } catch (e) {
+    logger.error(`Batch write failed at ${batchId}: ${e.message}`);
+    return err(e);
   }
 }
 
-
 export function createCollection<T>(collectionId: string) {
-
   const create = (_doc: Partial<T>) => {
-    const doc = addTimestamp(_doc);
-    logger.debug(`create ${collectionId}`, doc)
+    const doc = createTimestamp(_doc);
+    logger.debug(`create ${collectionId}`, doc);
     return ResultAsync.fromPromise(
       db.collection(collectionId).add(doc) as Promise<FirebaseFirestore.DocumentReference<T>>,
-      () => Error(`Unable to create doc`)
+      () => Error('Unable to create doc'),
     );
-  }
+  };
+
+  const getRef = (id: string) => ResultAsync.fromPromise(
+      db.collection(collectionId).doc(id).get() as Promise<FirebaseFirestore.DocumentSnapshot<T>>,
+      () => Error('Unable to get by id'),
+  );
 
   const upsert = async (id: string, _doc: Partial<T>) => {
-    const doc = addTimestamp(_doc);
-    return ResultAsync.fromPromise(db.collection(collectionId).doc(id).set(doc, { merge: true }), () => Error('Unable to upsert user in DB'))
-  }
-
-  const getRef = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).get() as Promise<FirebaseFirestore.DocumentSnapshot<T>>, () => Error('Unable to get by id'));
+    const getDoc = await getRef(id);
+    const doc = getDoc.isErr() || !getDoc.value.exists
+      ? createTimestamp(_doc) //
+      : updateTimestamp(_doc);
+    return ResultAsync.fromPromise(
+      db.collection(collectionId).doc(id).set(doc, { merge: true }),
+      () => Error('Unable to upsert user in DB'),
+    );
+  };
 
   const get = async (id: string) => {
-    const get_ = await getRef(id);
-    if (get_.isErr()) {
-      return err(get_.error)
+    const getGetRef = await getRef(id);
+    if (getGetRef.isErr()) {
+      return err(getGetRef.error);
     }
-    if (!get_.value.exists) {
+    if (!getGetRef.value.exists) {
       return err(Error('Doc do not exist'));
     }
     const doc = {
-      id: get_.value.id,
-      ...get_.value.data()
-    } as T
+      id: getGetRef.value.id,
+      ...getGetRef.value.data(),
+    } as unknown as T;
     return ok(doc);
-  }
+  };
 
-  const _removeUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).delete(), () => Error('Unable to delete'));
-  
+  const removeUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).delete(), () => Error('Unable to delete'));
+
   const remove = async (id: string, canDeleteCb: (doc: T) => boolean) => {
     const getDoc = await getRef(id);
     if (getDoc.isErr()) {
@@ -121,26 +143,36 @@ export function createCollection<T>(collectionId: string) {
       return err(Error('Doc does not exist'));
     }
 
-    if(!canDeleteCb(doc)){
+    if (!canDeleteCb(doc)) {
       return err(Error('Can not delete this doc'));
     }
 
-    const getDelete = await _removeUnsafe(id);
+    const getDelete = await removeUnsafe(id);
     if (getDelete.isErr()) {
-      logger.error(getDelete.error.message)
-      return err(getDelete.error)
+      logger.error(getDelete.error.message);
+      return err(getDelete.error);
     }
     return ok(getDoc.value);
-  }
-  
-  const getMany = (conditions?: Condition<T>[]) => {
-    return bulkGet<T>(collectionId, conditions);
-  }
+  };
 
-  const createMany = (data: Partial<T>[], getId: (doc: Partial<T>) => string, options?: FirebaseFirestore.SetOptions) => {
-    return bulkWrite<T>(collectionId, data, getId, options)
-  }
+  const getMany = (conditions?: Condition<T>[]) => bulkGet<T>(collectionId, conditions);
 
-  return { get, getRef, create, upsert, delete: remove, getMany, createMany }
-  
+  const createMany = (
+    data: T[], //
+  ) => bulkWrite<T>(collectionId, data, false);
+
+  const updateMany = (
+    data: Partial<T>[], //
+  ) => bulkWrite<T>(collectionId, data, true);
+
+  return {
+    get,
+    getRef,
+    create,
+    upsert,
+    delete: remove,
+    getMany,
+    updateMany,
+    createMany,
+  };
 }

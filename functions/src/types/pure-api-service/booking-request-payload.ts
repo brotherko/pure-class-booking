@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 export type BookingRequestPayload = {
   language_id: number;
   region_id: number;

@@ -2,6 +2,7 @@ import { Auditable } from './auditable';
 import { Schedule } from './schedule';
 import { UserBasicInfo } from './user';
 
+// eslint-disable-next-line no-shadow
 export enum OrderStatus {
   SUCCESS = 'SUCCESS',
   FAIL = 'FAIL',
@@ -9,7 +10,6 @@ export enum OrderStatus {
 }
 
 export type Order = Auditable<{
-  id: string;
   bookingId?: number;
   user: UserBasicInfo;
   schedule: Schedule;
@@ -17,4 +17,4 @@ export type Order = Auditable<{
   createdAt: Date;
   updatedAt: Date;
   error?: string;
-}>
+}>;

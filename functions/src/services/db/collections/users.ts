@@ -1,6 +1,6 @@
-import { createCollection } from '../absracts/collection';
 import _ from 'lodash';
 import { err, ok, Result } from 'neverthrow';
+import { createCollection } from '../absracts/collection';
 import { User, UserBasicInfo } from '../../../types/db/user';
 
 const basic = createCollection<User>('users');
@@ -13,9 +13,9 @@ const getBasicInfo = async (id: string): Promise<Result<UserBasicInfo, Error>> =
   const doc = get.value as User;
   const filteredDoc = _.omit(doc, ['password', 'jwt', 'token']);
   return ok(filteredDoc);
-}
+};
 
 export const usersCollection = {
   ...basic,
   getBasicInfo,
-}
+};

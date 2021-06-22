@@ -23,7 +23,7 @@ const ApiProvider: React.FC = ({ children }) => {
     token = `Bearer ${jwt}`;
   }
   return <RestfulProvider<response>
-    base="/api"
+    base={process.env.REACT_APP_API_BASE_URL || '/api'}
     onError={(err) => {
       console.error(err);
       const message = (err.data as response).message || err.message

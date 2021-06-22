@@ -22,15 +22,14 @@ winston.addColors(colors);
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf(({
-    timestamp, level, message, ...meta
-  }) => `${timestamp} [${level}]: ${message}\n${meta ? JSON.stringify(meta) : ''}`),
+  winston.format.printf(
+    ({
+      timestamp, level, message, ...meta
+    }) => `${timestamp} [${level}]: ${message}\n${meta ? JSON.stringify(meta) : ''}`,
+  ),
 );
 
-const transports = [
-  new winston.transports.Console(),
-  new LoggingWinston(),
-];
+const transports = [new winston.transports.Console(), new LoggingWinston()];
 
 const logger = winston.createLogger({
   level: (process.env.NODE_ENV || 'development') === 'development' ? 'debug' : 'info',

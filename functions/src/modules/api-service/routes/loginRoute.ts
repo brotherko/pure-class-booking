@@ -8,8 +8,7 @@ export const loginRoute = {
   post: async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, password } = req.body as PureUserCredential;
-      console.log(req.path)
-    
+
       if (!username || !password) {
         return next(Error('username or password not found'));
       }
@@ -23,10 +22,14 @@ export const loginRoute = {
       });
 
       if (getLogin.isErr()) {
+        logger.debug(getLogin.error.message);
         return next(Error('Incorrect username or password'));
       }
 
-      const { user, jwtPayload: { uid } } = getLogin.value;
+      const {
+        user,
+        jwtPayload: { uid },
+      } = getLogin.value;
 
       const getUpsertUser = await usersCollection.upsert(uid, { ...user, username, password });
       if (getUpsertUser.isErr()) {
@@ -41,5 +44,5 @@ export const loginRoute = {
     } catch (e) {
       return next(e);
     }
-  }
+  },
 };

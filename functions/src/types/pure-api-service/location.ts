@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 interface Names {
   en: string;
 }
