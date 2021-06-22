@@ -1,12 +1,9 @@
 import React, { useMemo } from 'react';
-import { Button, Heading, Box } from 'react-bulma-components';
+import { Heading, Box } from 'react-bulma-components';
 import { Order, OrderStatus } from '../types/db/order';
 import _ from 'lodash';
 import { ScheduleItem } from './ScheduleItem';
 import { ActionButton } from './ActionButton';
-import { useMutate } from 'restful-react';
-import { ApiResponse } from '../types/api-response';
-import { useMessage } from '../hooks/useMessage';
 
 export const HistorialOrders = ({ orders, deleteOrderAction }: { orders: Order[], deleteOrderAction: (id: string) => void }) => {
 
