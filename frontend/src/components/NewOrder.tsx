@@ -11,6 +11,7 @@ import { Order } from '../types/db/order';
 import { Schedule } from '../types/db/schedule';
 import { ApiResponse } from '../types/api-response';
 import { Header } from './Header';
+import { isDev } from '../utils/is-dev';
 
 const { Field, Label } = Form;
 
@@ -70,7 +71,9 @@ export const NewOrder = () => {
     }));
   };
 
-  const startDate = DateTime.now().plus(Duration.fromObject({ days: 0 }));
+  const now = DateTime.now();
+  const daysAdj = isDev() ? 0 : (now.hour >= 9) ? 3 : 2;
+  const startDate = now.plus(Duration.fromObject({ days: daysAdj}));
   const endDate = useMemo(() => {
     if (!startDate || !schedules || schedules.length === 0) {
       return startDate;

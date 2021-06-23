@@ -11,10 +11,18 @@ function* mapDay(interval) {
   }
 }
 
-export const DateSelect = ({ startDate, endDate, ...rest }: SelectComponentsProps & { startDate: DateTime, endDate: DateTime }) => {
-  const interval = Interval.fromDateTimes(startDate, endDate)
+type Props = SelectComponentsProps & {
+  startDate: DateTime;
+  endDate: DateTime;
+}
+
+export const DateSelect = ({ startDate, endDate, ...rest }: Props) => {
+  const interval = Interval.fromDateTimes(
+    startDate,
+    endDate.plus({ days: 1 }) // fromDateTime not include end day
+  ) 
   const options = Array.from(mapDay(interval)).map((date) => ({
-    label: date.toFormat('yyyy-LL-dd cccc'),
+    label: date.toFormat('cccc yyyy-LL-dd'),
     value: date,
   }))
 

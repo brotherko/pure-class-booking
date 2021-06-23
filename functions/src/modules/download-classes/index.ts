@@ -15,14 +15,9 @@ import { taskHttpResponse } from '../../utils/http-task-wrapper';
 const params: ViewScheduleRequestParams = {
   language_id: 1,
   region_id: 1,
-  teacher_id: '0',
-  class_type_id: '0',
-  level_id: '0',
-  pillar_id: '0',
-  // "location_ids": 18, // debug
+  // location_ids: 18, // debug
+  location_ids: 0,
   days: '7',
-  filter_type: '',
-  start_date: '2021-06-12',
   include_events: '0',
 };
 
@@ -49,18 +44,20 @@ const fetchRawSchedules = async (startDate: string) => {
 
 const transformSchedules = (schedules: PureSchedule[]) => schedules.map((schedule) => ({
   ...schedule,
+  id: schedule.id.toString(),
   start_datetime: new Date(schedule.start_datetime),
   end_datetime: new Date(schedule.end_datetime),
-})) as PureSchedule[];
+}));
 
 const downloadScheduleData = async (startDate: string): Promise<Result<boolean, Error>> => {
   const raw = await fetchRawSchedules(startDate);
   const transformed = transformSchedules(raw) as Schedule[];
 
+  console.log(transformed);
+
   const getWrite = await schedulesCollection.createMany(transformed);
 
   if (getWrite.isErr()) {
-    logger.info(`Classes[Total: ${transformed.length}] Download - OK`);
     return err(getWrite.error);
   }
   return ok(true);
@@ -80,12 +77,16 @@ const downloadLocations = async () => {
   if (!locations) {
     logger.error('location not found in payload');
   }
+
+  const transformed = locations.map((location) => ({
+    ...location,
+    id: location.id.toString()
+  }))
   const getWrite = await locationsCollection.createMany(
-    locations as Location[], //
+    transformed as Location[], //
   );
 
   if (getWrite.isErr()) {
-    logger.info('saved');
     return err(Error('Can not save'));
   }
   return ok(true);
@@ -97,12 +98,18 @@ const task = async () => {
   logger.info(`starting to get class data from ${date}`);
   const getDownloadScheduleData = await downloadScheduleData(date);
   if (getDownloadScheduleData.isErr()) {
-    logger.info('Schedule data - OK');
+    logger.error('Unable to download schedules');
+  } else {
+    logger.info(`Schedules download - OK`);
   }
 
   logger.info('getting latest location data');
-  await downloadLocations();
-  logger.info('Location - OK');
+  const getDownloadLocations = await downloadLocations();
+  if (getDownloadLocations.isErr()) {
+    logger.error('Unable to download locations')
+  } else {
+    logger.info('Locations download - OK');
+  }
 };
 
 export const downloadClassesJob = functions.pubsub
