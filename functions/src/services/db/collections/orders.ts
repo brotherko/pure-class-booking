@@ -23,7 +23,7 @@ export const getUserOrders = async (userId: string) => {
   }
 
   const { value: orders } = getOrders;
-  orders.sort((a, b) => b.schedule.start_datetime.valueOf() - a.schedule.start_datetime.valueOf());
+  orders.sort((a, b) => b.schedule.startDatetime.valueOf() - a.schedule.startDatetime.valueOf());
   return ok(orders.slice(0, 10)); // return latest 10 rows
 };
 

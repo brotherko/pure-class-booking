@@ -21,8 +21,6 @@ interface District {
 
 export interface PureLocation {
   id: number;
-  code: string;
-  image_link: string;
   contact_no: string;
   latitude: string;
   longitude: string;

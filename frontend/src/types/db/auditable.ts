@@ -1,4 +1,7 @@
+import { Second } from "../firestore-second";
+
 export type Auditable<T> = T & {
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+  id: string;
+  createdAt?: Second;
+  updatedAt?: Second;
+};

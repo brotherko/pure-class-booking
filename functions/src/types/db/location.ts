@@ -1,4 +1,8 @@
-import { PureLocation } from '../pure-api-service/location';
 import { Auditable } from './auditable';
 
-export type Location = Auditable<PureLocation>;
+export type Location = Auditable<{
+  id: number;
+  name: string;
+  shortName: string;
+  sector: 'Y' | 'F';
+}>;

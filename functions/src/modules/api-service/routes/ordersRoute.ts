@@ -7,6 +7,9 @@ import {
   usersCollection,
 } from '../../../services/db';
 import { OrderStatus } from '../../../types/db/order';
+import { Schedule } from '../../../types/db/schedule';
+
+const getScheduleName = (schedule: Schedule) => `${schedule.name}@${schedule.date}`;
 
 export const OrdersRoute = {
   get: async (req: Request, res: Response, next: NextFunction) => {
@@ -69,9 +72,7 @@ export const OrdersRoute = {
     return res.json({
       id,
       message: `Order ${
-        deletedOrder
-          ? `${deletedOrder.schedule.class_type.name}@${deletedOrder.schedule.start_date}`
-          : ''
+        deletedOrder ? getScheduleName(deletedOrder.schedule) : ''
       } has been deleted`,
     });
   },

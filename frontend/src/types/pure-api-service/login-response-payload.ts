@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 export type PureUser = {
   id: string;
   username: string;
@@ -8,7 +9,7 @@ export type PureUser = {
   mbo_uid: string;
   bind_chat: boolean;
   jwt: string;
-}
+};
 export type LoginResponsePayload = {
-  user: PureUser
-}
+  user: PureUser;
+};

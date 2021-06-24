@@ -57,7 +57,7 @@ export const task = async () => {
       value: OrderStatus.PENDING,
     },
     {
-      key: 'schedule.start_date',
+      key: 'schedule.date',
       op: '==',
       value: processDay,
     },

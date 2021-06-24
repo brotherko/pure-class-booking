@@ -26,6 +26,7 @@ const task = async () => {
   try {
     const data = await getHeaders();
     db.collection('configs').doc('extraHeaders').set(data);
+    logger.info('Successfully update extra headers');
   } catch (e) {
     logger.error('Unable to refresh extra headers');
     throw new Error(e);

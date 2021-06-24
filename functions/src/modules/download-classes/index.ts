@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
 import { DateTime, Duration } from 'luxon';
 import { err, ok, Result } from 'neverthrow';
-import _ from 'lodash';
+import _, { transform } from 'lodash';
 import { getClassesData, getLocationRaw } from '../../services/pure-api-service';
 import logger from '../../utils/logger';
 import { schedulesCollection } from '../../services/db';
@@ -11,6 +11,7 @@ import { ViewScheduleRequestParams } from '../../types/pure-api-service/view-sch
 import { Location } from '../../types/db/location';
 import { Schedule } from '../../types/db/schedule';
 import { taskHttpResponse } from '../../utils/http-task-wrapper';
+import { PureLocation } from '../../types/pure-api-service/location';
 
 const params: ViewScheduleRequestParams = {
   language_id: 1,
@@ -43,25 +44,54 @@ const fetchRawSchedules = async (startDate: string) => {
 };
 
 const transformSchedules = (schedules: PureSchedule[]) => schedules.map((schedule) => ({
-  ...schedule,
   id: schedule.id.toString(),
-  start_datetime: new Date(schedule.start_datetime),
-  end_datetime: new Date(schedule.end_datetime),
+  date: schedule.start_date,
+  name: schedule.class_type.name,
+  sector: schedule.sector,
+  startDatetime: new Date(schedule.start_datetime),
+  endDatetime: new Date(schedule.end_datetime),
+  duration: schedule.duration_min,
+  locationId: schedule.location_id.toString(),
 }));
 
 const downloadScheduleData = async (startDate: string): Promise<Result<boolean, Error>> => {
-  const raw = await fetchRawSchedules(startDate);
-  const transformed = transformSchedules(raw) as Schedule[];
+  try {
+    const raw = await fetchRawSchedules(startDate);
+    let transformed = transformSchedules(raw) as Schedule[];
 
-  console.log(transformed);
+    const getLocations = await locationsCollection.getMany();
+    if (getLocations.isOk()) {
+      const { value: locations } = getLocations;
+      transformed = transformed.map((schedule) => ({
+        ...schedule,
+        location: locations.find((location) => location.id === schedule.locationId),
+      }));
+    }
 
-  const getWrite = await schedulesCollection.createMany(transformed);
+    const getWrite = await schedulesCollection.createMany(transformed);
 
-  if (getWrite.isErr()) {
-    return err(getWrite.error);
+    if (getWrite.isErr()) {
+      return err(getWrite.error);
+    }
+    return ok(true);
+  } catch (e) {
+    return err(e);
   }
-  return ok(true);
 };
+
+const transformLocations = (locations: PureLocation[]): Location[] => locations.map(
+  (location) => ({
+    id: location.id.toString(),
+    name: location.names.en,
+    shortName: location.short_name.en,
+    // eslint-disable-next-line no-nested-ternary
+    sector: location.is_yoga
+      ? 'Y' //
+      : location.is_fitness
+        ? 'F'
+        : '',
+  } as Location),
+);
 
 const downloadLocations = async () => {
   const getRaw = await getLocationRaw({
@@ -72,16 +102,13 @@ const downloadLocations = async () => {
     logger.error('Unable to fetch raw location');
     return err(getRaw.error);
   }
-  const locations = _.get(getRaw.value, ['data', 'data', 'locations']);
+  const raw = _.get(getRaw.value, ['data', 'data', 'locations']);
 
-  if (!locations) {
+  if (!raw) {
     logger.error('location not found in payload');
   }
+  const transformed = transformLocations(raw);
 
-  const transformed = locations.map((location) => ({
-    ...location,
-    id: location.id.toString()
-  }))
   const getWrite = await locationsCollection.createMany(
     transformed as Location[], //
   );
@@ -100,13 +127,13 @@ const task = async () => {
   if (getDownloadScheduleData.isErr()) {
     logger.error('Unable to download schedules');
   } else {
-    logger.info(`Schedules download - OK`);
+    logger.info('Schedules download - OK');
   }
 
   logger.info('getting latest location data');
   const getDownloadLocations = await downloadLocations();
   if (getDownloadLocations.isErr()) {
-    logger.error('Unable to download locations')
+    logger.error('Unable to download locations');
   } else {
     logger.info('Locations download - OK');
   }

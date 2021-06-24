@@ -6,4 +6,4 @@ export type PureJwtPayload = {
   exp: number;
   uid: string;
   sid: string;
-}
+};
