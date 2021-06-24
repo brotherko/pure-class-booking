@@ -5,10 +5,7 @@ import {
   Content,
   Box,
   Hero,
-  Button,
   Message,
-  Icon,
-  Columns,
 } from "react-bulma-components";
 import { Location } from "../types/db/location";
 import Select from "react-select";
