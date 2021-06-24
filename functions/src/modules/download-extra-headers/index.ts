@@ -6,8 +6,6 @@ import { db } from '../../services/db/absracts/collection';
 import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const getHeaders = async () => {
-  logger.info('Preparing extra header to deal with crosssite scripting');
-
   const { data } = await axios.get(PURE_HOME_URL);
   const re = new RegExp(/{"X-Date":(.*?),"X-Token":"(.*?)"};/);
   const match = data.match(re);
@@ -35,7 +33,7 @@ const task = async () => {
 };
 
 export const refreshExtraHeadersJob = functions.pubsub
-  .schedule('00 */1 * * *')
+  .schedule('00 */2 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
 export const refreshExtraHeadersHttp = functions.https.onRequest(taskHttpResponse(task));

@@ -1,11 +1,14 @@
 import * as functions from 'firebase-functions';
 import { err, ok, Result } from 'neverthrow';
+import { DateTime } from 'luxon';
 import { postBooking } from '../../services/pure-api-service';
 import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
 import { OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
 import { taskHttpResponse } from '../../utils/http-task-wrapper';
+
+const BOOKING_DAYS_IN_ADVANCE = 2;
 
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese
@@ -37,13 +40,26 @@ const makeBooking = async (
   }
 };
 
+const getProcessDay = () => {
+  const today = DateTime.now();
+  return today.plus({ days: BOOKING_DAYS_IN_ADVANCE }).toFormat('yyyy-LL-dd');
+};
+
 export const task = async () => {
-  logger.info('Booking task start');
+  const processDay = getProcessDay();
+
+  logger.info(`Booking processing order at ${processDay}`);
+
   const getOrders = await ordersCollection.getMany([
     {
       key: 'status',
       op: '==',
       value: OrderStatus.PENDING,
+    },
+    {
+      key: 'schedule.start_date',
+      op: '==',
+      value: processDay,
     },
   ]);
 
