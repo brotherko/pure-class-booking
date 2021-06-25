@@ -4,10 +4,14 @@ import Select from 'react-select';
 import { SelectComponentsProps } from 'react-select/src/Select';
 
 function* mapDay(interval) {
-  let cursor = interval.start.startOf("day");
-  while (cursor < interval.end) {
-    yield cursor;
-    cursor = cursor.plus({ days: 1 });
+  try {
+    let cursor = interval.start.startOf("day");
+    while (cursor < interval.end) {
+      yield cursor;
+      cursor = cursor.plus({ days: 1 });
+    }
+  } catch (e) {
+    return [];
   }
 }
 

@@ -1,7 +1,7 @@
-import React, { FormEvent, useEffect, useRef } from 'react';
-import { Hero, Container, Form, Button } from 'react-bulma-components';
-import { useHistory } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React, { FormEvent, useEffect, useRef } from "react";
+import { Hero, Container, Form, Button } from "react-bulma-components";
+import { useHistory } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 const { Input, Label, Field } = Form;
 
@@ -10,20 +10,20 @@ export const Login = () => {
   const { replace } = useHistory();
 
   const usernameRef = useRef<any>(null);
-  const passwordRef = useRef<any>(null)
+  const passwordRef = useRef<any>(null);
 
   const loginHandler = (e: FormEvent) => {
     e.preventDefault();
     if (usernameRef && usernameRef.current) {
       login(usernameRef.current.value, passwordRef.current.value);
     }
-  }
+  };
 
   useEffect(() => {
     if (user) {
-      replace('/')
+      replace("/");
     }
-  }, [replace, user])
+  }, [replace, user]);
 
   return (
     <Hero.Body alignItems="center">
@@ -37,7 +37,15 @@ export const Login = () => {
             <Label>Password</Label>
             <Input domRef={passwordRef} type="password" />
           </Field>
-          <Button color="primary" fullwidth loading={isLoading} onClick={loginHandler} submit>Sign In</Button>
+          <Button
+            color="primary"
+            fullwidth
+            loading={isLoading}
+            onClick={loginHandler}
+            submit
+          >
+            Sign In
+          </Button>
         </form>
       </Container>
     </Hero.Body>

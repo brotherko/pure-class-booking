@@ -140,7 +140,7 @@ const task = async () => {
 };
 
 export const downloadClassesJob = functions.pubsub
-  .schedule('00 06 * * *')
+  .schedule('00 */6 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
 export const downloadClassesHttp = functions.https.onRequest(taskHttpResponse(task));
