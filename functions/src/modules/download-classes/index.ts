@@ -54,6 +54,16 @@ const transformSchedules = (schedules: PureSchedule[]) => schedules.map((schedul
   locationId: schedule.location_id.toString(),
 }));
 
+const deleteOldScheduleData = async (): Promise<Result<boolean, Error>> => {
+  // TODO: to only delete old record to minimize delete count
+  const getDeleteAll = await schedulesCollection.deleteMany();
+  if (getDeleteAll.isErr()) {
+    logger.error(`Unable to delete schedule data: ${getDeleteAll.error.message}`);
+    return err(getDeleteAll.error);
+  }
+  return ok(true);
+};
+
 const downloadScheduleData = async (startDate: string): Promise<Result<boolean, Error>> => {
   try {
     const raw = await fetchRawSchedules(startDate);
@@ -122,10 +132,18 @@ const downloadLocations = async () => {
 const task = async () => {
   const date = DateTime.now().toFormat('yyyy-LL-dd');
 
+  logger.info('starting to clean up schedule collection');
+  const getDeleteScheduleData = await deleteOldScheduleData();
+  if (getDeleteScheduleData.isErr()) {
+    logger.error('Delete schedules - Fail');
+  } else {
+    logger.info('Delete schedule - OK');
+  }
+
   logger.info(`starting to get class data from ${date}`);
   const getDownloadScheduleData = await downloadScheduleData(date);
   if (getDownloadScheduleData.isErr()) {
-    logger.error('Unable to download schedules');
+    logger.error('Download schedules - Fail');
   } else {
     logger.info('Schedules download - OK');
   }
@@ -133,7 +151,7 @@ const task = async () => {
   logger.info('getting latest location data');
   const getDownloadLocations = await downloadLocations();
   if (getDownloadLocations.isErr()) {
-    logger.error('Unable to download locations');
+    logger.error('Download locations - Fail');
   } else {
     logger.info('Locations download - OK');
   }

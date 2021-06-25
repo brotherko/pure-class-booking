@@ -15,7 +15,7 @@ export type Condition<T> = {
   value: any;
 };
 
-const MAX_WRITES_PER_BATCH = 500;
+const FIRESTORE_MAX_OPS_PER_BATCH = 500;
 
 function createTimestamp<T>(doc: T) {
   return {
@@ -31,16 +31,49 @@ function updateTimestamp<T>(doc: T) {
   } as Auditable<T>;
 }
 
-async function bulkGet<T>(
-  collection: string,
-  conditions?: Condition<T>[],
-): Promise<Result<T[], Error>> {
+function getQuery<T>(collection: string, conditions?: Condition<T>[]) {
   let q = db.collection(collection).offset(0);
   if (conditions) {
     for (const { key, op, value } of conditions) {
       q = q.where(key as string, op, value);
     }
   }
+  return q;
+}
+
+async function bulkDelete<T>(
+  collection: string,
+  conditions?: Condition<T>[],
+): Promise<Result<boolean, Error>> {
+  logger.info(`Performing batch delete in ${collection}`);
+  logger.info(`Condition ${JSON.stringify(conditions)}`);
+  try {
+    const q = getQuery(collection, conditions);
+    const snapshot = await q.get();
+    const chunks = _.chunk(snapshot.docs, FIRESTORE_MAX_OPS_PER_BATCH);
+    let batchId = 1;
+    for (const chunk of chunks) {
+      const batch = db.batch();
+      chunk.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      logger.debug(`Batch ${batchId} - OK`);
+      batchId += 1;
+    }
+    logger.info(`Batch delete - OK, total ${snapshot.docs.length} in ${batchId} batches`);
+    return ok(true);
+  } catch (e) {
+    logger.error(`Batch delete - Fail: ${e.message}`);
+    return err(e);
+  }
+}
+
+async function bulkGet<T>(
+  collection: string,
+  conditions?: Condition<T>[],
+): Promise<Result<T[], Error>> {
+  const q = getQuery(collection, conditions);
   const data: T[] = [];
   try {
     const snapshot = await q.get();
@@ -65,9 +98,9 @@ async function bulkWrite<T>(
   if (!data || !Array.isArray(data) || data.length === 0) {
     return err(Error('Incorrect data format'));
   }
-  const chunks = _.chunk(data, MAX_WRITES_PER_BATCH);
+  const chunks = _.chunk(data, FIRESTORE_MAX_OPS_PER_BATCH);
   logger.debug(`Starting batch save ${data.length} rows as total of ${chunks.length} batch`);
-  let batchId = 0;
+  let batchId = 1;
 
   try {
     for (const chunk of chunks) {
@@ -77,6 +110,7 @@ async function bulkWrite<T>(
         batch.set(db.collection(collection).doc(doc.id), doc, isUpsert ? { merge: true } : {});
       });
       await batch.commit();
+
       logger.debug(`Batch ${batchId} - OK`);
       batchId += 1;
     }
@@ -156,6 +190,8 @@ export function createCollection<T>(collectionId: string) {
 
   const getMany = (conditions?: Condition<T>[]) => bulkGet<T>(collectionId, conditions);
 
+  const deleteMany = (conditions?: Condition<T>[]) => bulkDelete<T>(collectionId, conditions);
+
   const createMany = (
     data: T[], //
   ) => bulkWrite<T>(collectionId, data, false);
@@ -173,5 +209,6 @@ export function createCollection<T>(collectionId: string) {
     getMany,
     updateMany,
     createMany,
+    deleteMany,
   };
 }
