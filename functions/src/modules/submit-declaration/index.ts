@@ -93,4 +93,3 @@ export const submitDeclarationJob = functions.pubsub
   .schedule('00 07 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const submitDeclarationHttp = functions.https.onRequest(taskHttpResponse(task));

@@ -37,4 +37,3 @@ export const refreshExtraHeadersJob = functions.pubsub
   .schedule('00 */2 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const refreshExtraHeadersHttp = functions.https.onRequest(taskHttpResponse(task));

@@ -135,5 +135,3 @@ export const startBookingJob = functions
     }
     await task();
   });
-
-export const startBookingHttp = functions.https.onRequest(taskHttpResponse(task));

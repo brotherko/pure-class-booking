@@ -44,4 +44,3 @@ export const refreshUsersJwtJob = functions.pubsub
   .schedule('55 08 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
-export const refreshUsersJwtHttp = functions.https.onRequest(taskHttpResponse(task));
