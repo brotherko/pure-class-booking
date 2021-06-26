@@ -6,7 +6,6 @@ import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
 import { OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
-import { taskHttpResponse } from '../../utils/http-task-wrapper';
 
 const BOOKING_DAYS_IN_ADVANCE = 2;
 
@@ -27,9 +26,7 @@ const makeBooking = async (
   };
 
   try {
-    const {
-      data: { error, data },
-    } = await postBooking(payload, jwt);
+    const { data: { error, data } } = await postBooking(payload, jwt);
     const { booking_id: bookingId } = data || {};
     if (!data || error.code !== 200 || !bookingId) {
       return err(Error(error.message || 'Unable to book'));

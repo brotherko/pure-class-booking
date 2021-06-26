@@ -1,7 +1,7 @@
 import * as functions from 'firebase-functions';
-import { DateTime, Duration } from 'luxon';
+import { DateTime } from 'luxon';
 import { err, ok, Result } from 'neverthrow';
-import _, { transform } from 'lodash';
+import _ from 'lodash';
 import { getClassesData, getLocationRaw } from '../../services/pure-api-service';
 import logger from '../../utils/logger';
 import { schedulesCollection } from '../../services/db';
@@ -10,7 +10,6 @@ import { PureSchedule } from '../../types/pure-api-service/class';
 import { ViewScheduleRequestParams } from '../../types/pure-api-service/view-schedule-request-param';
 import { Location } from '../../types/db/location';
 import { Schedule } from '../../types/db/schedule';
-import { taskHttpResponse } from '../../utils/http-task-wrapper';
 import { PureLocation } from '../../types/pure-api-service/location';
 
 const params: ViewScheduleRequestParams = {
@@ -24,12 +23,7 @@ const params: ViewScheduleRequestParams = {
 
 const fetchRawSchedules = async (startDate: string) => {
   try {
-    const {
-      data: {
-        error,
-        data: { classes: classData },
-      },
-    } = await getClassesData({
+    const { data: { error, data: { classes: classData } } } = await getClassesData({
       ...params,
       start_date: startDate,
     });
@@ -97,9 +91,7 @@ const transformLocations = (locations: PureLocation[]): Location[] => locations.
     // eslint-disable-next-line no-nested-ternary
     sector: location.is_yoga
       ? 'Y' //
-      : location.is_fitness
-        ? 'F'
-        : '',
+      : location.is_fitness ? 'F' : '',
   } as Location),
 );
 

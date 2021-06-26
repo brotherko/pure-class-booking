@@ -1,9 +1,9 @@
 import axios from 'axios';
 import * as functions from 'firebase-functions';
-import { PURE_HOME_URL } from './consts';
 import logger from '../../utils/logger';
 import { db } from '../../services/db/absracts/collection';
-import { taskHttpResponse } from '../../utils/http-task-wrapper';
+
+const PURE_HOME_URL = 'https://pure360.pure-fitness.com/en/HK';
 
 const getHeaders = async () => {
   const { data } = await axios.get(PURE_HOME_URL);
@@ -25,7 +25,10 @@ const getHeaders = async () => {
 const task = async () => {
   try {
     const data = await getHeaders();
-    db.collection('configs').doc('extraHeaders').set(data);
+    db
+      .collection('configs')
+      .doc('extraHeaders')
+      .set(data);
     logger.info('Successfully update extra headers');
   } catch (e) {
     logger.error('Unable to refresh extra headers');
