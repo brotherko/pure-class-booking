@@ -1,13 +1,12 @@
-# Pure Fitness class booking'
+# Pure Fitness class booking
 ## What it does?
 - Auto fitness/yoga class booking two days in advance
-- Auto submit the annoying declaration form
+- Auto submit the annoying declaration form for you
 
 ## How it works?
 - Step 1: Login to the web app with the same login credential as if you are logging in to the Pure Fitness portal
 - Step 2: Select the class that you wanted to book
 - Step 3: Get enough protein and work hard in the classes 
-
 
 ## Screenshots
 ![Screenshot](https://i.postimg.cc/Qd32KbW1/screencapture-pure-automator-316705-web-app-2021-06-27-02-11-54-1.png)
