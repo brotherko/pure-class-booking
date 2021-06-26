@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import jwtDecode from 'jwt-decode';
-import { PureJwtPayload } from '../../../types/pure-jwt-payload';
+import { logger } from 'firebase-functions';
+import { decodeToken } from '../../../utils/auth';
 
 export const expressJwtAuth = (req: Request, _res: Response, next: NextFunction) => {
   const auth = req.header('authorization');
-  console.log('in jwt express');
   if (!auth) {
     return next(Error('Credential not found'));
   }
@@ -15,11 +14,12 @@ export const expressJwtAuth = (req: Request, _res: Response, next: NextFunction)
   }
   const token = credentials;
 
-  const payload = jwtDecode<PureJwtPayload>(token);
-  if (!payload || !payload.uid) {
+  const getPayload = decodeToken(token);
+  if (getPayload.isErr()) {
+    logger.info(getPayload.error);
     return next(Error('Malform Jwt'));
   }
 
-  req.jwtPayload = payload;
+  req.jwtPayload = getPayload.value;
   return next();
 };

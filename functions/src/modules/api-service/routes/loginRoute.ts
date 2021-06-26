@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import { usersCollection } from '../../../services/db';
 import { postLogin } from '../../../services/pure-api-service';
+import { PureUser } from '../../../types/pure-api-service/login-response-payload';
 import { PureUserCredential } from '../../../types/pure-user-credential';
+import { signToken } from '../../../utils/auth';
 import logger from '../../../utils/logger';
 
 export const loginRoute = {
@@ -28,8 +30,16 @@ export const loginRoute = {
 
       const {
         user,
-        jwtPayload: { uid },
+        jwtPayload,
       } = getLogin.value;
+
+      const { uid } = jwtPayload;
+
+      if (!uid) {
+        return next(Error('Unexpected error: UID not found'));
+      }
+
+      const token = signToken(jwtPayload);
 
       const getUpsertUser = await usersCollection.upsert(uid, { ...user, username, password });
       if (getUpsertUser.isErr()) {
@@ -39,7 +49,10 @@ export const loginRoute = {
 
       return res.json({
         message: `Welcome! ${user.first_name} ${user.last_name}`,
-        data: user,
+        data: {
+          ...user,
+          jwt: token,
+        } as PureUser,
       });
     } catch (e) {
       return next(e);
