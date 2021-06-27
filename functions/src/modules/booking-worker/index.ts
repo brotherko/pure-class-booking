@@ -7,6 +7,7 @@ import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
 import { OrderMerged, OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
+import { delay } from '../../utils/delay';
 
 const BOOKING_DAYS_IN_ADVANCE = 2;
 const BASE_PAYLOAD: BookingRequestPayload = {
@@ -133,8 +134,7 @@ const getCronSchedule = () => {
     logger.info('***DEV MODE***');
     return '*/1 * * * *';
   }
-  // return '00 09 * * *';
-  return '30 00 * * *';
+  return '00 00 09 * * *';
 };
 
 const task = async () => {
@@ -164,8 +164,8 @@ const task = async () => {
       rule: cron,
       tz: 'HongKong',
     },
-    async () => {
-      logger.info(`booking job running at ${new Date(Date.now())}`);
+    async (firedate) => {
+      logger.info(`expect: ${firedate}; actual: ${new Date()}`);
       await handleBooking(promises, orders);
       job.cancel();
     },
@@ -178,8 +178,8 @@ export const startBookingJob = functions
     timeoutSeconds: 300,
   })
   .region('asia-east2')
-  .pubsub.schedule('59 08 * * *')
+  .pubsub.schedule('58 08 * * *')
   .timeZone('Asia/Hong_Kong')
-  .onRun(() => {
-    task();
+  .onRun(async () => {
+    await task();
   });
