@@ -1,10 +1,11 @@
 import * as functions from 'firebase-functions';
 import { err, ok, Result } from 'neverthrow';
 import { DateTime } from 'luxon';
+import schedule from 'node-schedule';
 import { postBooking } from '../../services/pure-api-service';
 import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
-import { OrderStatus } from '../../types/db/order';
+import { OrderMerged, OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
 
 const BOOKING_DAYS_IN_ADVANCE = 2;
@@ -42,10 +43,8 @@ const getProcessDay = () => {
   return today.plus({ days: BOOKING_DAYS_IN_ADVANCE }).toFormat('yyyy-LL-dd');
 };
 
-export const task = async () => {
-  const processDay = getProcessDay();
-
-  logger.info(`Booking processing order at ${processDay}`);
+const getPendingOrders = async (date: string): Promise<Result<OrderMerged[], Error>> => {
+  logger.info(`Booking processing order at ${date}`);
 
   const getOrders = await ordersCollection.getMany([
     {
@@ -56,7 +55,7 @@ export const task = async () => {
     {
       key: 'schedule.date',
       op: '==',
-      value: processDay,
+      value: date,
     },
   ]);
 
@@ -66,17 +65,23 @@ export const task = async () => {
   logger.debug(getOrders);
 
   if (users.isErr() || getOrders.isErr()) {
-    logger.error('get pendingOrders | users err');
-    return;
+    return err(Error('Unable to fetch orders'));
   }
 
-  const ordersMerged = getOrders.value.map((order) => ({
-    ...order,
-    user: users.value.find((user) => user.id === order.user.id),
-  }));
+  const ordersMerged = getOrders.value.map(
+    (order) => ({
+      ...order,
+      user: users.value.find((user) => user.id === order.user.id),
+    } as OrderMerged),
+  );
 
+  return ok(ordersMerged);
+};
+
+const fetchBookingPromises = async (orders: OrderMerged[]) => {
   const promises: Promise<Result<number, Error>>[] = [];
-  ordersMerged.forEach(({ user: { jwt } = {}, schedule: { id: scheduleId } }) => {
+
+  orders.forEach(({ user: { jwt } = {}, schedule: { id: scheduleId } }) => {
     if (!jwt || !scheduleId) {
       // this is confirmed to be fail. will be handle together with those failed orders
       promises.push(
@@ -87,11 +92,14 @@ export const task = async () => {
     }
   });
 
-  const responses = await Promise.all(promises);
+  return ok(Promise.all(promises));
+};
 
+const handleBooking = async (promises: Promise<Result<number, Error>[]>, orders: OrderMerged[]) => {
+  const responses = await promises;
   const failedCount = responses.filter((res) => res.isErr()).length;
 
-  const updates = getOrders.value.map(({ id }, idx) => {
+  const updates = orders.map(({ id }, idx) => {
     const res = responses[idx];
     if (res.isErr()) {
       return {
@@ -109,9 +117,7 @@ export const task = async () => {
 
   logger.debug(updates);
 
-  logger.info(
-    `Booking OK -  Success: ${getOrders.value.length - failedCount} Fail: ${failedCount}`,
-  );
+  logger.info(`Booking OK -  Success: ${orders.length - failedCount} Fail: ${failedCount}`);
 
   try {
     await ordersCollection.updateMany(updates);
@@ -122,13 +128,36 @@ export const task = async () => {
   }
 };
 
+const scheduleTask = async () => {
+  const date = getProcessDay();
+  const getOrders = await getPendingOrders(date);
+  if (getOrders.isErr()) {
+    logger.error(getOrders.error.message);
+    return err('Unable to prepare promises');
+  }
+
+  const { value: orders } = getOrders;
+
+  const getPromises = await fetchBookingPromises(orders);
+  if (getPromises.isErr()) {
+    return;
+  }
+  const { value: promises } = getPromises;
+  // const job = schedule.scheduleJob('00 09 * * *', async () => {
+  const job = schedule.scheduleJob('*/1 * * * *', async () => {
+    logger.info(`schedule job running at ${new Date(Date.now())}`);
+    await handleBooking(promises, orders);
+    job.cancel();
+  });
+};
+
 export const startBookingJob = functions
+  .runWith({
+    timeoutSeconds: 300,
+  })
   .region('asia-east2')
-  .pubsub.topic('start-booking')
-  .onPublish(async (message) => {
-    if (message.attributes.action === 'warmup') {
-      logger.info('Warmup confirm');
-      return;
-    }
-    await task();
+  .pubsub.schedule('59 08 * * *')
+  .timeZone('Asia/Hong_Kong')
+  .onRun(() => {
+    scheduleTask();
   });

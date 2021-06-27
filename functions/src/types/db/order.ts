@@ -1,6 +1,6 @@
 import { Auditable } from './auditable';
 import { Schedule } from './schedule';
-import { UserBasicInfo } from './user';
+import { User, UserBasicInfo } from './user';
 
 // eslint-disable-next-line no-shadow
 export enum OrderStatus {
@@ -9,12 +9,19 @@ export enum OrderStatus {
   PENDING = 'PENDING',
 }
 
-export type Order = Auditable<{
+export type OrderBase = Auditable<{
   bookingId?: number;
-  user: UserBasicInfo;
   schedule: Schedule;
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
   error?: string;
 }>;
+
+export type Order = OrderBase & {
+  user: UserBasicInfo;
+};
+
+export type OrderMerged = Order & {
+  user: User;
+};
