@@ -9,7 +9,6 @@ import { OrderMerged, OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
 
 const BOOKING_DAYS_IN_ADVANCE = 2;
-
 const BASE_PAYLOAD: BookingRequestPayload = {
   language_id: 1, // 1 = English, 2 = Chinese
   region_id: 1,
@@ -128,27 +127,50 @@ const handleBooking = async (promises: Promise<Result<number, Error>[]>, orders:
   }
 };
 
-const scheduleTask = async () => {
+const getCronSchedule = () => {
+  const isDev = process.env.FUNCTIONS_EMULATOR === 'true';
+  if (isDev) {
+    logger.info('***DEV MODE***');
+    return '*/1 * * * *';
+  }
+  // return '00 09 * * *';
+  return '30 00 * * *';
+};
+
+const task = async () => {
   const date = getProcessDay();
   const getOrders = await getPendingOrders(date);
   if (getOrders.isErr()) {
     logger.error(getOrders.error.message);
-    return err('Unable to prepare promises');
+    return;
   }
 
   const { value: orders } = getOrders;
 
-  const getPromises = await fetchBookingPromises(orders);
-  if (getPromises.isErr()) {
+  if (!orders || orders.length === 0) {
+    logger.info('SKIP: No pending orders');
     return;
   }
+
+  const getPromises = await fetchBookingPromises(orders);
+  if (getPromises.isErr()) {
+    logger.error('Unable to prepare promises to execute booking');
+    return null;
+  }
   const { value: promises } = getPromises;
-  // const job = schedule.scheduleJob('00 09 * * *', async () => {
-  const job = schedule.scheduleJob('*/1 * * * *', async () => {
-    logger.info(`schedule job running at ${new Date(Date.now())}`);
-    await handleBooking(promises, orders);
-    job.cancel();
-  });
+  const cron = getCronSchedule();
+  const job = schedule.scheduleJob(
+    {
+      rule: cron,
+      tz: 'HongKong',
+    },
+    async () => {
+      logger.info(`booking job running at ${new Date(Date.now())}`);
+      await handleBooking(promises, orders);
+      job.cancel();
+    },
+  );
+  return null;
 };
 
 export const startBookingJob = functions
@@ -159,5 +181,5 @@ export const startBookingJob = functions
   .pubsub.schedule('59 08 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(() => {
-    scheduleTask();
+    task();
   });
