@@ -78,26 +78,17 @@ const getPendingOrders = async (date: string): Promise<Result<OrderMerged[], Err
   return ok(ordersMerged);
 };
 
-const fetchBookingPromises = async (orders: OrderMerged[]) => {
-  const promises: Promise<Result<number, Error>>[] = [];
-
-  orders.forEach(({ user: { jwt } = {}, schedule: { id: scheduleId } }) => {
-    if (!jwt || !scheduleId) {
-      // this is confirmed to be fail. will be handle together with those failed orders
-      promises.push(
-        new Promise((resolve) => resolve(err(Error('Jwt or classId not found in order')))),
-      );
-    } else {
-      promises.push(makeBooking(jwt, scheduleId));
-    }
-  });
-
-  return ok(Promise.all(promises));
-};
-
-const handleBooking = async (promises: Promise<Result<number, Error>[]>, orders: OrderMerged[]) => {
-  const responses = await promises;
-  const failedCount = responses.filter((res) => res.isErr()).length;
+const handleBooking = async (orders: OrderMerged[]) => {
+  const responses = await Promise.all(orders.map(
+    ({ user: { jwt } = {}, schedule: { id: scheduleId } }) => {
+      if (!jwt || !scheduleId) {
+        // this is confirmed to be fail. will be handle together with those failed orders
+        return new Promise((resolve) => resolve(err(Error('Jwt or classId not found in order'))));
+      }
+      return makeBooking(jwt, scheduleId);
+    },
+  ) as Promise<Result<number, Error>>[]);
+  const failed = responses.filter((res) => res.isErr());
 
   const updates = orders.map(({ id }, idx) => {
     const res = responses[idx];
@@ -117,7 +108,7 @@ const handleBooking = async (promises: Promise<Result<number, Error>[]>, orders:
 
   logger.debug(updates);
 
-  logger.info(`Booking OK -  Success: ${orders.length - failedCount} Fail: ${failedCount}`);
+  logger.info(`Booking OK -  Success: ${orders.length - failed.length} Fail: ${failed.length}`);
 
   try {
     await ordersCollection.updateMany(updates);
@@ -132,9 +123,10 @@ const getCronSchedule = () => {
   const isDev = process.env.FUNCTIONS_EMULATOR === 'true';
   if (isDev) {
     logger.info('***DEV MODE***');
-    return '*/1 * * * *';
+    return '00 */1 * * * *';
   }
-  return '00 00 09 * * *';
+  return '00 */1 * * * *';
+  // return '00 00 09 * * *';
 };
 
 const task = async () => {
@@ -144,20 +136,11 @@ const task = async () => {
     logger.error(getOrders.error.message);
     return;
   }
-
   const { value: orders } = getOrders;
-
   if (!orders || orders.length === 0) {
     logger.info('SKIP: No pending orders');
     return;
   }
-
-  const getPromises = await fetchBookingPromises(orders);
-  if (getPromises.isErr()) {
-    logger.error('Unable to prepare promises to execute booking');
-    return null;
-  }
-  const { value: promises } = getPromises;
   const cron = getCronSchedule();
   const job = schedule.scheduleJob(
     {
@@ -166,11 +149,11 @@ const task = async () => {
     },
     async (firedate) => {
       logger.info(`expect: ${firedate}; actual: ${new Date()}`);
-      await handleBooking(promises, orders);
+      await handleBooking(orders);
       job.cancel();
     },
   );
-  return null;
+  // return null;
 };
 
 export const startBookingJob = functions
