@@ -90,6 +90,6 @@ const task = async () => {
   }
 };
 export const submitDeclarationJob = functions.pubsub
-  .schedule('00 07 * * *')
+  .schedule('30 06 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(task);
