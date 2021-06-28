@@ -19,7 +19,7 @@ export type OrderAttempt = {
 export type OrderBase = Auditable<{
   bookingId?: number;
   schedule: Schedule;
-  attempts?: Record<number, OrderAttempt>;
+  attempts?: Record<string, OrderAttempt>;
   createdAt: Date;
   updatedAt: Date;
   error?: string;

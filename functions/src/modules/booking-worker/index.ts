@@ -136,7 +136,7 @@ const getCronSchedules = () => {
   return schedules;
 };
 
-const task = async () => {
+const executeBooking = async () => {
   const date = getProcessDay();
   const getOrders = await getPendingOrders(date);
   if (getOrders.isErr()) {
@@ -169,6 +169,29 @@ const task = async () => {
   // return null;
 };
 
+const verifyBooking = async () => {
+  const date = getProcessDay();
+  const getOrders = await getPendingOrders(date);
+  if (getOrders.isErr()) {
+    return logger.error(getOrders.error);
+  }
+  const { value: orders } = getOrders;
+  const updates = orders.map(({ id, attempts }) => {
+    const status = attempts && Object.keys(attempts).some((key) => attempts[key].status === OrderStatus.SUCCESS)
+      ? OrderStatus.SUCCESS
+      : OrderStatus.FAIL;
+    return {
+      id,
+      status,
+    };
+  });
+  const updateOrders = await ordersCollection.updateMany(updates);
+  if (updateOrders.isErr()) {
+    logger.error('Unable to verify booking');
+  }
+  return true;
+};
+
 export const startBookingJob = functions
   .runWith({
     timeoutSeconds: 300,
@@ -177,7 +200,16 @@ export const startBookingJob = functions
   .pubsub.schedule('58 08 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(async () => {
-    task();
+    executeBooking();
     await delay(300); // keep alive
+    return true;
+  });
+
+export const verifyBookingJob = functions
+  .region('asia-east2')
+  .pubsub.schedule('05 09 * * *')
+  .timeZone('Asia/Hong_Kong')
+  .onRun(async () => {
+    await verifyBooking();
     return true;
   });
