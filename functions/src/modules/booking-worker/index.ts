@@ -1,11 +1,13 @@
 import * as functions from 'firebase-functions';
-import { err, ok, Result } from 'neverthrow';
+import {
+  err, Ok, ok, Result,
+} from 'neverthrow';
 import { DateTime } from 'luxon';
-import schedule from 'node-schedule';
+import cron from 'node-cron';
 import { postBooking } from '../../services/pure-api-service';
 import logger from '../../utils/logger';
 import { ordersCollection, usersCollection } from '../../services/db';
-import { OrderMerged, OrderStatus } from '../../types/db/order';
+import { OrderAttempt, OrderMerged, OrderStatus } from '../../types/db/order';
 import { BookingRequestPayload } from '../../types/pure-api-service/booking-request-payload';
 import { delay } from '../../utils/delay';
 
@@ -16,6 +18,13 @@ const BASE_PAYLOAD: BookingRequestPayload = {
   booked_from: 'WEB',
   book_type: 1,
 };
+const BOOKING_SCHEDULE_DEV = ['00 */1 * * * *', '30 * * * * *'];
+const BOOKING_SCHEDULE_PROD = [
+  '58 59 08 * * *',
+  '59 59 08 * * *',
+  '00 00 09 * * *',
+  '01 00 09 * * *',
+];
 
 const makeBooking = async (
   jwt: string,
@@ -78,7 +87,29 @@ const getPendingOrders = async (date: string): Promise<Result<OrderMerged[], Err
   return ok(ordersMerged);
 };
 
+const saveBooking = (orderId: string, attemptAt: Date, response: Result<number, Error>) => {
+  const attempt: OrderAttempt = response.isErr()
+    ? {
+      status: OrderStatus.FAIL,
+      error: response.error.toString(),
+      attemptAt,
+    }
+    : {
+      status: OrderStatus.SUCCESS,
+      bookingId: response.value,
+      attemptAt,
+    };
+  const order = {
+    id: orderId,
+    attempts: {
+      [attemptAt.getTime()]: attempt,
+    },
+  };
+  ordersCollection.upsert(orderId, order);
+};
+
 const handleBooking = async (orders: OrderMerged[]) => {
+  const attemptTime = new Date();
   const responses = await Promise.all(orders.map(
     ({ user: { jwt } = {}, schedule: { id: scheduleId } }) => {
       if (!jwt || !scheduleId) {
@@ -90,43 +121,19 @@ const handleBooking = async (orders: OrderMerged[]) => {
   ) as Promise<Result<number, Error>>[]);
   const failed = responses.filter((res) => res.isErr());
 
-  const updates = orders.map(({ id }, idx) => {
+  orders.map(({ id }, idx) => {
     const res = responses[idx];
-    if (res.isErr()) {
-      return {
-        id,
-        status: OrderStatus.FAIL,
-        error: res.error.toString(),
-      };
-    }
-    return {
-      id,
-      status: OrderStatus.SUCCESS,
-      bookingId: res.value,
-    };
+    saveBooking(id, attemptTime, res);
   });
 
-  logger.debug(updates);
-
   logger.info(`Booking OK -  Success: ${orders.length - failed.length} Fail: ${failed.length}`);
-
-  try {
-    await ordersCollection.updateMany(updates);
-
-    logger.info("Stored order's result");
-  } catch (e) {
-    logger.error(`Can not booking result to database: ${e}`);
-  }
 };
 
-const getCronSchedule = () => {
+const getCronSchedules = () => {
   const isDev = process.env.FUNCTIONS_EMULATOR === 'true';
-  if (isDev) {
-    logger.info('***DEV MODE***');
-    return '00 */1 * * * *';
-  }
-  return '00 */1 * * * *';
-  // return '00 00 09 * * *';
+  const schedules = isDev ? BOOKING_SCHEDULE_DEV : BOOKING_SCHEDULE_PROD;
+  logger.info(`Using schedule: ${schedules}`);
+  return schedules;
 };
 
 const task = async () => {
@@ -141,18 +148,24 @@ const task = async () => {
     logger.info('SKIP: No pending orders');
     return;
   }
-  const cron = getCronSchedule();
-  const job = schedule.scheduleJob(
-    {
-      rule: cron,
-      tz: 'HongKong',
-    },
-    async (firedate) => {
-      logger.info(`expect: ${firedate}; actual: ${new Date()}`);
-      await handleBooking(orders);
-      job.cancel();
-    },
-  );
+  const cronSchedules = getCronSchedules();
+  cronSchedules.forEach((schedule) => {
+    cron.schedule(
+      schedule,
+      async () => {
+        const start = new Date();
+        logger.info(`Schedule[${schedule}] started`);
+
+        await handleBooking(orders);
+
+        const time = (new Date().getTime() - start.getTime()) / 1000;
+        logger.info(`schedule[${schedule}] finished ${time}s`);
+      },
+      {
+        timezone: 'Asia/Hong_Kong',
+      },
+    );
+  });
   // return null;
 };
 
@@ -164,5 +177,7 @@ export const startBookingJob = functions
   .pubsub.schedule('58 08 * * *')
   .timeZone('Asia/Hong_Kong')
   .onRun(async () => {
-    await task();
+    task();
+    await delay(300); // keep alive
+    return true;
   });

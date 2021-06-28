@@ -78,10 +78,10 @@ async function bulkGet<T>(
   try {
     const snapshot = await q.get();
     for (const doc of snapshot.docs) {
-      data.push({
+      data.push(({
         ...doc.data(),
         id: doc.id,
-      } as unknown as T);
+      } as unknown) as T);
     }
     return ok(data);
   } catch (e) {
@@ -132,7 +132,10 @@ export function createCollection<T>(collectionId: string) {
   };
 
   const getRef = (id: string) => ResultAsync.fromPromise(
-      db.collection(collectionId).doc(id).get() as Promise<FirebaseFirestore.DocumentSnapshot<T>>,
+      db
+        .collection(collectionId)
+        .doc(id)
+        .get() as Promise<FirebaseFirestore.DocumentSnapshot<T>>,
       () => Error('Unable to get by id'),
   );
 
@@ -142,7 +145,10 @@ export function createCollection<T>(collectionId: string) {
       ? createTimestamp(_doc) //
       : updateTimestamp(_doc);
     return ResultAsync.fromPromise(
-      db.collection(collectionId).doc(id).set(doc, { merge: true }),
+      db
+        .collection(collectionId)
+        .doc(id)
+        .set(doc, { merge: true }),
       () => Error('Unable to upsert user in DB'),
     );
   };
@@ -155,14 +161,20 @@ export function createCollection<T>(collectionId: string) {
     if (!getGetRef.value.exists) {
       return err(Error('Doc do not exist'));
     }
-    const doc = {
+    const doc = ({
       id: getGetRef.value.id,
       ...getGetRef.value.data(),
-    } as unknown as T;
+    } as unknown) as T;
     return ok(doc);
   };
 
-  const removeUnsafe = (id: string) => ResultAsync.fromPromise(db.collection(collectionId).doc(id).delete(), () => Error('Unable to delete'));
+  const removeUnsafe = (id: string) => ResultAsync.fromPromise(
+    db
+      .collection(collectionId)
+      .doc(id)
+      .delete(),
+    () => Error('Unable to delete'),
+  );
 
   const remove = async (id: string, canDeleteCb: (doc: T) => boolean) => {
     const getDoc = await getRef(id);
@@ -200,7 +212,10 @@ export function createCollection<T>(collectionId: string) {
     data: Partial<T>[], //
   ) => bulkWrite<T>(collectionId, data, true);
 
+  const collection = db.collection(collectionId);
+
   return {
+    collection,
     get,
     getRef,
     create,

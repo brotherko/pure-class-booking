@@ -23,10 +23,7 @@ const task = async () => {
       return;
     }
 
-    const {
-      user: { jwt },
-      jwtPayload: { exp },
-    } = getJwt.value;
+    const { user: { jwt }, jwtPayload: { exp } } = getJwt.value;
 
     await usersCollection.upsert(id, {
       jwt,
@@ -34,7 +31,7 @@ const task = async () => {
       updatedAt: firestore.FieldValue.serverTimestamp(),
     });
     logger.debug(`User[${username}] JWT refresh - OK`);
-    await delay(2);
+    await delay(0.5);
   }
 
   logger.info('JWT refresh - Finished');

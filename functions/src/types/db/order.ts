@@ -9,13 +9,21 @@ export enum OrderStatus {
   PENDING = 'PENDING',
 }
 
+export type OrderAttempt = {
+  status: OrderStatus;
+  bookingId?: number;
+  error?: string;
+  attemptAt: Date;
+};
+
 export type OrderBase = Auditable<{
   bookingId?: number;
   schedule: Schedule;
-  status: OrderStatus;
+  attempts?: Record<number, OrderAttempt>;
   createdAt: Date;
   updatedAt: Date;
   error?: string;
+  status: OrderStatus;
 }>;
 
 export type Order = OrderBase & {
