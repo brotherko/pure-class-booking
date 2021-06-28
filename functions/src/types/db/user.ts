@@ -15,4 +15,7 @@ export type User = Auditable<
   }
 >;
 
-export type UserBasicInfo = Omit<User, 'password' | 'jwt' | 'token'>;
+export type UserBasicInfo = Pick<
+  User,
+  'first_name' | 'username' | 'last_name' | 'mbo_rssid' | 'mbo_uid' | 'id'
+>;

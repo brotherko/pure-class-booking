@@ -11,7 +11,14 @@ const getBasicInfo = async (id: string): Promise<Result<UserBasicInfo, Error>> =
     return err(get.error);
   }
   const doc = get.value as User;
-  const filteredDoc = _.omit(doc, ['password', 'jwt', 'token']);
+  const filteredDoc = _.pick(doc, [
+    'id',
+    'first_name',
+    'last_name',
+    'mbo_rssid',
+    'mbo_uid',
+    'username',
+  ]);
   return ok(filteredDoc);
 };
 
