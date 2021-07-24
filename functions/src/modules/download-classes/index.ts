@@ -42,11 +42,12 @@ const transformSchedules = (schedules: PureSchedule[]) => schedules.map((schedul
   date: schedule.start_date,
   name: schedule.class_type.name,
   sector: schedule.sector,
+  isVaccinated: schedule.class_type.name.includes('Vaccinated Class'),
   startDatetime: new Date(schedule.start_datetime),
   endDatetime: new Date(schedule.end_datetime),
   duration: schedule.duration_min,
   locationId: schedule.location_id.toString(),
-}));
+} as Schedule));
 
 const deleteOldScheduleData = async (): Promise<Result<boolean, Error>> => {
   // TODO: to only delete old record to minimize delete count
@@ -61,7 +62,7 @@ const deleteOldScheduleData = async (): Promise<Result<boolean, Error>> => {
 const downloadScheduleData = async (startDate: string): Promise<Result<boolean, Error>> => {
   try {
     const raw = await fetchRawSchedules(startDate);
-    let transformed = transformSchedules(raw) as Schedule[];
+    let transformed = transformSchedules(raw);
 
     const getLocations = await locationsCollection.getMany();
     if (getLocations.isOk()) {

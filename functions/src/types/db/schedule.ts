@@ -7,6 +7,7 @@ export type Schedule = Auditable<{
   date: string;
   name: string;
   sector: 'F' | 'Y';
+  isVaccinated: boolean;
   startDatetime: Date;
   endDatetime: Date;
   location?: Location;
