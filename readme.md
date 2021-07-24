@@ -5,6 +5,9 @@
 
 ![Screenshot](https://i.postimg.cc/Qd32KbW1/screencapture-pure-automator-316705-web-app-2021-06-27-02-11-54-1.png)
 
+## local dev
+To download cloud env to local
+`firebase functions:config:get > .runtimeconfig.json`
 
 ## Test Pilot [under development]
 If you are lucky enought to see this repo and you are also a pure fitness member. Here you go: https://pure-automator-316705.web.app/
