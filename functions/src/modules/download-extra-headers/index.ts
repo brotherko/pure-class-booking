@@ -1,8 +1,8 @@
 import axios from 'axios';
 import * as functions from 'firebase-functions';
-import logger from '../../utils/logger';
 import { db } from '../../services/db/absracts/collection';
 import cheerio from 'cheerio';
+import { logger } from 'firebase-functions';
 
 const PURE_HOME_URL = 'https://pure360.pure-fitness.com/en/HK';
 
