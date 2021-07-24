@@ -9,6 +9,7 @@ export type ScheduleFilter = {
   locationId?: string;
   class?: "Y" | "F";
   date?: DateTime;
+  isVaccinated: boolean;
 };
 
 const formatTime = (date: Second) => {
@@ -24,7 +25,7 @@ export const ScheduleItem = ({
   action: JSX.Element;
 }) => {
   return (
-    <Media key={schedule.id}>
+    <Media>
       <Media.Item>
         <Content>
           <p>

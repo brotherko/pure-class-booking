@@ -35,7 +35,7 @@ export const NewOrder = () => {
       return data.data;
     },
   });
-  const [filter, setFilter] = useState<ScheduleFilter>({});
+  const [filter, setFilter] = useState<ScheduleFilter>({} as ScheduleFilter);
   const { success } = useMessage();
 
   const { mutate: deleteOrder } = useMutate<ApiResponse<Order>>({
@@ -53,7 +53,7 @@ export const NewOrder = () => {
     resolve: (data) => data.data,
   });
 
-  const { data: schedules, refetch } = useGet<Schedule[]>({
+  const { data: schedules, loading: scheduleLoading, refetch } = useGet<Schedule[]>({
     path: `schedules/location/${filter ? filter.locationId : ""}`,
     lazy: true,
     resolve: (data) => data.data,
@@ -73,26 +73,10 @@ export const NewOrder = () => {
     success(message);
   };
 
-  const onClassChange = (v: { value: "F" | "Y" }) => {
-    setFilter((old) => ({
-      ...old,
-      class: v.value,
-    }));
-  };
-
-  const onDateChange = (v: { value: DateTime }) => {
-    setFilter((old) => ({
-      ...old,
-      date: v.value,
-    }));
-  };
-
-  const onLocationChange = (v: { value: string }) => {
-    setFilter((old) => ({
-      ...old,
-      locationId: v.value,
-    }));
-  };
+  const updateFilter = (next: Partial<ScheduleFilter>) => setFilter(prev => ({
+    ...prev,
+    ...next
+  }))
 
   const now = DateTime.now();
   const daysAdj = isDev() ? 0 : now.hour >= 9 ? 3 : 2;
@@ -124,10 +108,11 @@ export const NewOrder = () => {
     if (!schedules || !filter.date) {
       return undefined;
     }
-    return schedules.filter((schedule) =>
-      parseDate(schedule.date).equals(filter.date)
+    const filtered = schedules.filter((schedule) => parseDate(schedule.date).equals(filter.date) 
+      && (filter.isVaccinated ? schedule.isVaccinated : true)
     );
-  }, [filter.date, schedules]);
+    return filtered
+  }, [filter.date, filter.isVaccinated, schedules]);
 
   useEffect(() => {
     if (filter.locationId) {
@@ -151,13 +136,17 @@ export const NewOrder = () => {
           <Message.Body>
             <Field>
               <Label>Service</Label>
-              <Select options={classOptions} onChange={onClassChange} />
+              <Select options={classOptions} onChange={next => updateFilter({
+                class: next.value
+              })} />
             </Field>
             <Field>
               <Label>Location</Label>
               <Select
                 options={locationsOptions}
-                onChange={onLocationChange}
+                onChange={next => updateFilter({
+                  locationId: next.value
+                })}
                 isLoading={locationLoading}
               />
             </Field>
@@ -166,9 +155,19 @@ export const NewOrder = () => {
               <DateSelect
                 startDate={startDate}
                 endDate={endDate}
-                onChange={onDateChange}
-                isDisabled={filter.locationId === undefined}
+                onChange={(next => updateFilter({
+                  date: next.value
+                }))}
+                isLoading={scheduleLoading}
+                isDisabled={scheduleLoading || filter.locationId === undefined}
               />
+            </Field>
+            <Field textAlign="right">
+              <Form.Checkbox onChange={(next) => updateFilter({
+                isVaccinated: next.target.checked
+              })}>
+              Show only vaccinated classes
+              </Form.Checkbox>
             </Field>
 
             {filteredSchedules && filteredSchedules.length > 0 && (
@@ -183,7 +182,7 @@ export const NewOrder = () => {
                         Book
                       </ActionButton>
                     );
-                    return <ScheduleItem schedule={schedule} action={action} />;
+                    return <ScheduleItem key={schedule.id} schedule={schedule} action={action} />;
                   })}
                 </Content>
               </Box>

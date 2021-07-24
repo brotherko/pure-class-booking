@@ -46,6 +46,7 @@ export const HistorialOrders = ({
                     const schedule = order.schedule;
                     return (
                       <ScheduleItem
+                        key={schedule.id}
                         schedule={schedule}
                         action={action}
                         status={order.status}

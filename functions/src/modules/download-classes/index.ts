@@ -42,7 +42,7 @@ const transformSchedules = (schedules: PureSchedule[]) => schedules.map((schedul
   date: schedule.start_date,
   name: schedule.class_type.name,
   sector: schedule.sector,
-  isVaccinated: schedule.class_type.name.includes('Vaccinated Class'),
+  isVaccinated: schedule.class_type.name.includes('Vaccinated'),
   startDatetime: new Date(schedule.start_datetime),
   endDatetime: new Date(schedule.end_datetime),
   duration: schedule.duration_min,
