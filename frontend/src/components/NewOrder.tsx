@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Form,
   Container,
@@ -78,6 +78,9 @@ export const NewOrder = () => {
     ...next
   }))
 
+  const locationSelectRef = useRef<any>();
+  const dateSelectRef = useRef<any>();
+
   const now = DateTime.now();
   const daysAdj = isDev() ? 0 : now.hour >= 9 ? 3 : 2;
   const startDate = now.plus(Duration.fromObject({ days: daysAdj }));
@@ -117,6 +120,7 @@ export const NewOrder = () => {
   useEffect(() => {
     if (filter.locationId) {
       refetch();
+      dateSelectRef.current.select.clearValue();
     }
   }, [filter.locationId, refetch]);
 
@@ -136,27 +140,36 @@ export const NewOrder = () => {
           <Message.Body>
             <Field>
               <Label>Service</Label>
-              <Select options={classOptions} onChange={next => updateFilter({
-                class: next.value
-              })} />
+              <Select options={classOptions} onChange={next => {
+                updateFilter({
+                  class: next.value,
+                })
+                locationSelectRef.current.select.clearValue();
+            }} />
             </Field>
             <Field>
               <Label>Location</Label>
               <Select
+                ref={locationSelectRef}
                 options={locationsOptions}
-                onChange={next => updateFilter({
-                  locationId: next.value
-                })}
+                onChange={next => {
+                  updateFilter({
+                    locationId: (next && next.value) || undefined,
+                  })
+                  refetch();
+                  dateSelectRef.current.select.clearValue();
+                }}
                 isLoading={locationLoading}
               />
             </Field>
             <Field>
               <Label>Date</Label>
               <DateSelect
+                ref={dateSelectRef}
                 startDate={startDate}
                 endDate={endDate}
                 onChange={(next => updateFilter({
-                  date: next.value
+                  date: (next && next.value) || undefined
                 }))}
                 isLoading={scheduleLoading}
                 isDisabled={scheduleLoading || filter.locationId === undefined}
@@ -170,23 +183,21 @@ export const NewOrder = () => {
               </Form.Checkbox>
             </Field>
 
-            {filteredSchedules && filteredSchedules.length > 0 && (
-              <Box>
-                <Content>
-                  {filteredSchedules.map((schedule) => {
-                    const canBook = orders.every(
-                      (order) => order.schedule.id !== schedule.id
-                    );
-                    const action = canBook && (
-                      <ActionButton onClick={() => book(schedule.id)}>
-                        Book
-                      </ActionButton>
-                    );
-                    return <ScheduleItem key={schedule.id} schedule={schedule} action={action} />;
-                  })}
-                </Content>
-              </Box>
-            )}
+            <Box>
+              <Content>
+                {filteredSchedules && filteredSchedules.length > 0 ? filteredSchedules.map((schedule) => {
+                  const canBook = orders.every(
+                    (order) => order.schedule.id !== schedule.id
+                  );
+                  const action = canBook && (
+                    <ActionButton onClick={() => book(schedule.id)}>
+                      Book
+                    </ActionButton>
+                  );
+                  return <ScheduleItem key={schedule.id} schedule={schedule} action={action} />;
+                }) : <span>No classes available</span>}
+              </Content>
+          </Box>
           </Message.Body>
         </Message>
 

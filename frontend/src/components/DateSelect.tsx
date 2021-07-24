@@ -1,5 +1,5 @@
 import { DateTime, Interval } from 'luxon';
-import React, {  } from 'react';
+import React, { forwardRef } from 'react';
 import Select from 'react-select';
 import { SelectComponentsProps } from 'react-select/src/Select';
 
@@ -20,7 +20,7 @@ type Props = SelectComponentsProps & {
   endDate: DateTime;
 }
 
-export const DateSelect = ({ startDate, endDate, ...rest }: Props) => {
+export const DateSelect = forwardRef<any, any>(({ startDate, endDate, ...rest }: Props, ref) => {
   const interval = Interval.fromDateTimes(
     startDate,
     endDate.plus({ days: 1 }) // fromDateTime not include end day
@@ -31,7 +31,7 @@ export const DateSelect = ({ startDate, endDate, ...rest }: Props) => {
   }))
 
   return (
-    <Select options={options} {...rest} />
+    <Select ref={ref} options={options} {...rest} />
   )
 
-}
+});
