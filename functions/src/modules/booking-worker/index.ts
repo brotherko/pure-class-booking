@@ -176,6 +176,9 @@ const verifyBooking = async () => {
     return logger.error(getOrders.error);
   }
   const { value: orders } = getOrders;
+  if (orders.length === 0) {
+    return logger.error('SKIP: No orders');
+  }
   const updates = orders.map(({ id, attempts }) => {
     const status = attempts && Object.keys(attempts).some((key) => attempts[key].status === OrderStatus.SUCCESS)
       ? OrderStatus.SUCCESS
